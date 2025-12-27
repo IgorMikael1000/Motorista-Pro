@@ -1,0 +1,35 @@
+{
+    "name": "Motorista Pro Dev",
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/sshd:1": {},
+        "ghcr.io/devcontainers/features/postgres:1": {
+            "version": "latest",
+            "username": "postgres",
+            "password": "password",
+            "dbName": "motorista_dev"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "donjayamanne.python-extension-pack",
+                "formulahendry.code-runner",
+                "mtxr.sqltools",
+                "mtxr.sqltools-driver-pg",
+                "mtxr.sqltools-driver-sqlite"
+            ]
+        }
+    },
+    "forwardPorts": [
+        5000
+    ],
+    "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && python -c 'from app import db, create_app; app=create_app(); app.app_context().push(); db.create_all(); print(\"Banco de dados inicializado!\")'",
+    "remoteUser": "vscode"
+}
