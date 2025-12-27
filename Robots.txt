@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /termos
+Disallow: /admin/
+Disallow: /historico
+Disallow: /agenda
+Disallow: /manutencao
+Disallow: /configuracoes
+Disallow: /relatorios
+Sitemap: https://www.google.com/search?q=https://motorista-pro-app.onrender.com/sitemap.xml
+

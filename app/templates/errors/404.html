@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rota não encontrada</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; background: var(--bg-body); }
+        .glass-card { max-width: 350px; padding: 40px 30px; border-top: 4px solid var(--warning); }
+        .icon-box { font-size: 60px; color: var(--warning); margin-bottom: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="glass-card">
+        <div class="icon-box"><i class="fas fa-map-signs"></i></div>
+        
+        <h1 style="margin:0 0 10px 0; color:var(--text-main); font-size:28px; font-weight:800;">Eita, GPS perdido!</h1>
+        
+        <p style="margin:0 0 30px 0; font-size:14px; color:var(--text-secondary); line-height:1.5;">
+            Parece que você pegou uma entrada errada. Essa página (404) não existe no nosso mapa.
+        </p>
+        
+        <a href="/" class="btn" style="border-radius:50px; background: var(--primary-gradient);">
+            <i class="fas fa-route"></i> Recalcular Rota (Início)
+        </a>
+    </div>
+</body>
+</html>
+
+
+

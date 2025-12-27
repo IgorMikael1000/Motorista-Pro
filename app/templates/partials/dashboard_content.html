@@ -1,0 +1,140 @@
+{% import 'macros.html' as m with context %}
+
+<!-- FILTRO DE DATA (3 BOTÕES) -->
+<div class="filter-group fade-in">
+    
+    <!-- DIA -->
+    <div class="filter-btn {{ 'active' if tipo == 'dia' else '' }}" id="btn-dia">
+        <span class="fb-label">DIA</span>
+        <span class="fb-value">{{ filter_label if tipo == 'dia' else 'Filtrar' }}</span>
+        <input type="date" class="filter-input" onchange="submitDate(this.value, 'dia')">
+    </div>
+
+    <!-- SEMANA (AGORA É SELECT LISTA DE SEMANAS) -->
+    <div class="filter-btn {{ 'active' if tipo == 'semana' else '' }}" id="btn-semana">
+        <span class="fb-label">SEMANA</span>
+        <span class="fb-value">{{ filter_label|safe if tipo == 'semana' else 'Filtrar' }}</span>
+        
+        <!-- SELECT COM LISTA DE SEMANAS FORMATADAS -->
+        <select onchange="submitDate(this.value, 'semana')" class="filter-input">
+            <option value="" disabled selected>{{ filter_label if tipo == 'semana' else 'Selecione a Semana' }}</option>
+            {% for week in week_options %}
+                <option value="{{ week.value }}" {% if tipo == 'semana' and valor == week.value %}selected{% endif %}>
+                    {{ week.label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- MÊS -->
+    <div class="filter-btn {{ 'active' if tipo == 'mes' else '' }}" id="btn-mes">
+        <span class="fb-label">MÊS</span>
+        <span class="fb-value">{{ filter_label if tipo == 'mes' else 'Filtrar' }}</span>
+        <input type="month" class="filter-input" onchange="submitDate(this.value, 'mes')">
+    </div>
+
+</div>
+
+<!-- CÁLCULO META COM CORREÇÃO DE TIPO -->
+{% set meta_pct = 0 %}
+{% if meta > 0 %}
+    {% set meta_pct = (lucro_acumulado|float / meta|float * 100)|round|int %}
+{% endif %}
+
+{% if meta_pct > 100 %}{% set meta_pct = 100 %}{% endif %}
+
+<!-- CARDS -->
+{{ m.card_hero(lucro_operacional, resumo.ganho, resumo.despesa, tipo, valor) }}
+{{ m.card_timer_glass() }}
+
+<!-- WIDGETS HORIZONTAIS -->
+<div class="widget-grid fade-in" style="animation-delay: 0.2s;">
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-clock"></i></div>
+        <span class="wc-val">{{ resumo.horas|float_to_time }}h</span>
+        <span class="wc-lbl">Horas</span>
+    </div>
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-car"></i></div>
+        <span class="wc-val">{{ resumo.corridas }}</span>
+        <span class="wc-lbl">Corridas</span>
+    </div>
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-road"></i></div>
+        <span class="wc-val">{{ "%.0f"|format(resumo.km) }}</span>
+        <span class="wc-lbl">KM</span>
+    </div>
+</div>
+
+{{ m.card_meta_full(lucro_acumulado, meta, smart_goal) }}
+{{ m.card_performance_avg(metricas) }}
+{{ m.card_despesas_chart(dados_rosca) }}
+{{ m.card_manutencao_glass(lista_manutencao) }}
+
+<!-- SCRIPTS -->
+<script>
+    function toggleMeta() { const e = document.getElementById('metaEdit'); if(e) e.style.display = e.style.display==='block'?'none':'block'; }
+
+    function submitDate(valor, tipo) {
+        if(!valor) return;
+        window.location.href = `/?tipo=${tipo}&valor=${valor}`;
+    }
+    
+    function openPicker(tipo) {
+        if(tipo === 'semana') return; 
+        const el = document.querySelector(`.filter-btn.active input[type=${tipo === 'dia' ? 'date' : 'month'}]`);
+        if(el && el.showPicker) el.showPicker();
+        else if(el) el.click();
+    }
+
+    (function initCharts() {
+        try {
+            Chart.helpers.each(Chart.instances, function(i){ if(i.canvas.id==="chartDespesas"){i.destroy();} });
+            const ctxPie = document.getElementById('chartDespesas');
+            if(ctxPie && {{ dados_rosca|tojson }}.some(x => x > 0)) { 
+                new Chart(ctxPie, { 
+                    type: 'doughnut', 
+                    data: { labels: ['Comb','Alim','Manu'], datasets: [{ data: {{ dados_rosca|tojson }}, backgroundColor: ['#F59E0B','#EF4444','#64748B'], borderWidth: 0, hoverOffset: 4 }] }, 
+                    options: { cutout: '70%', plugins: { legend: { display: false } }, maintainAspectRatio: false, responsive: true } 
+                }); 
+            }
+        } catch(e) { console.error(e); }
+    })();
+
+    (function initTimer() {
+        const display=document.getElementById('displayTimer');const btnMain=document.getElementById('btnMain');const btnStop=document.getElementById('btnStop');
+        if(!window.currentUserId) window.currentUserId="{{ current_user.id }}";
+        const timerKeyState='timerState_'+window.currentUserId;
+        const timerKeyStart='startTime_'+window.currentUserId;
+        const timerKeyPaused='elapsedPaused_'+window.currentUserId;
+        
+        if(window.timerInterval) clearInterval(window.timerInterval);
+        
+        function fmt(ms){ const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60); return`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}` }
+        
+        window.upd=function(){
+            const st=localStorage.getItem(timerKeyState)||'stopped';
+            if(st==='running'){ display.innerText=fmt(Date.now()-parseInt(localStorage.getItem(timerKeyStart))); btnMain.innerHTML='<i class="fas fa-pause"></i>'; if(btnStop) btnStop.style.display='flex'; }
+            else if(st==='paused'){ display.innerText=fmt(parseInt(localStorage.getItem(timerKeyPaused))); btnMain.innerHTML='<i class="fas fa-play"></i>'; if(btnStop) btnStop.style.display='flex'; }
+            else{ display.innerText="00:00:00"; btnMain.innerHTML='<i class="fas fa-play"></i>'; if(btnStop) btnStop.style.display='none'; }
+        };
+        window.toggleTimer=function(){
+            const st=localStorage.getItem(timerKeyState)||'stopped';
+            if(st==='stopped'){ localStorage.setItem(timerKeyState,'running'); localStorage.setItem(timerKeyStart,Date.now()); window.timerInterval=setInterval(window.upd,1000); }
+            else if(st==='running'){ clearInterval(window.timerInterval); localStorage.setItem(timerKeyState,'paused'); localStorage.setItem(timerKeyPaused,Date.now()-parseInt(localStorage.getItem(timerKeyStart))); }
+            else if(st==='paused'){ localStorage.setItem(timerKeyState,'running'); localStorage.setItem(timerKeyStart,Date.now()-parseInt(localStorage.getItem(timerKeyPaused))); window.timerInterval=setInterval(window.upd,1000); }
+            window.upd();
+        };
+        window.stopTimer=function(){
+            clearInterval(window.timerInterval); const st=localStorage.getItem(timerKeyState); let ms=0;
+            if(st==='running') ms=Date.now()-parseInt(localStorage.getItem(timerKeyStart)); else if(st==='paused') ms=parseInt(localStorage.getItem(timerKeyPaused));
+            const totalSec = Math.floor(ms/1000); const h = Math.floor(totalSec/3600); const m = Math.floor((totalSec%3600)/60);
+            localStorage.setItem(timerKeyState,'stopped'); localStorage.removeItem(timerKeyStart); localStorage.removeItem(timerKeyPaused);
+            window.location.href=`/adicionar?tempo_cronometro=${h}:${m}`;
+        };
+        if(localStorage.getItem(timerKeyState)==='running') window.timerInterval=setInterval(window.upd,1000);
+        window.upd();
+    })();
+</script>
+
+

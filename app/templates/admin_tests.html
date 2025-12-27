@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado dos Testes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #1B254B; color: white; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 24px; }
+        .btn-back { background: rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
+        pre { background: black; color: #00FF00; padding: 20px; border-radius: 10px; overflow-x: auto; font-family: monospace; line-height: 1.5; white-space: pre-wrap; font-size: 12px; }
+        .status-badge { padding: 5px 15px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 14px; }
+        .bg-sucesso { background: #05CD99; color: black; }
+        .bg-erro { background: #EE5D50; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Diagnóstico</h1>
+                <p style="opacity: 0.7;">Resultado dos testes automatizados.</p>
+            </div>
+            <a href="/admin/dashboard" class="btn-back">Voltar</a>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            Status: 
+            <span class="status-badge bg-{{ status }}">
+                {{ "APROVADO" if status == "sucesso" else "FALHOU" }}
+            </span>
+        </div>
+
+        <pre>{{ output }}</pre>
+    </div>
+</body>
+</html>
+
+
+

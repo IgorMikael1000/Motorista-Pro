@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-material-ui/material-ui.min.css">
+<style>
+    .log-item {
+        background: white; border-left: 4px solid var(--primary);
+        padding: 15px; border-radius: 12px; margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .log-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+    .log-title { font-weight: 800; color: var(--text-main); font-size: 14px; }
+    .log-meta { font-size: 11px; margin-top: 5px; color: var(--text-secondary); }
+    
+    .btn-pdf {
+        background: rgba(37, 99, 235, 0.1); color: var(--primary);
+        padding: 12px; border-radius: 12px; font-weight: 700;
+        text-align: center; display: block; margin-bottom: 20px;
+        text-decoration: none; border: 1px dashed var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Manutenção</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Odômetro: {{ "%.0f"|format(odo) }} km</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 120px; animation-delay: 0.1s;">
+    
+    <!-- ABAS -->
+    <div class="mode-selector" style="margin-bottom: 25px;">
+        <button onclick="showTab('alertas')" id="tab-alertas" class="mode-pill active">Alertas</button>
+        <button onclick="showTab('historico')" id="tab-historico" class="mode-pill">Livro de Revisões</button>
+    </div>
+
+    <!-- VIEW ALERTAS -->
+    <div id="view-alertas">
+        <!-- ADD FORM -->
+        <div class="glass-card">
+            <div class="card-title"><span>Criar Alerta</span></div>
+            <form action="/adicionar_manutencao" method="POST" style="display:flex; gap:10px; align-items:flex-end;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="flex:2;">
+                    <label style="font-size:10px; color:var(--text-secondary); font-weight:700;">ITEM</label>
+                    <input type="text" name="item" placeholder="Ex: Óleo" required style="padding:12px;">
+                </div>
+                <div style="flex:1.5;">
+                    <label style="font-size:10px; color:var(--text-secondary); font-weight:700;">INTERVALO (KM)</label>
+                    <input type="number" name="km_proxima" placeholder="5000" required style="padding:12px;">
+                </div>
+                <button type="submit" class="btn" style="width:48px; height:48px; padding:0; border-radius:14px; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </form>
+            <p style="font-size:10px; color:var(--text-secondary); margin-top:8px; opacity:0.7;">* A contagem começa a partir do KM atual.</p>
+        </div>
+
+        <!-- LISTA -->
+        <div style="font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-bottom:15px; margin-left:5px;">Próximas Trocas</div>
+        
+        {% if itens %}
+            {% for i in itens %}
+            <div class="glass-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid {{ 'var(--danger)' if i.urgencia == 'critica' or i.urgencia == 'alta' else 'var(--warning)' if i.urgencia == 'media' else 'var(--success)' }};">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="font-weight:700; font-size:14px; color:var(--text-main);">{{ i.item }}</span>
+                    <span style="font-size:11px; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:8px; font-weight:600;">Meta: {{ "%.0f"|format(i.km_proxima) }}</span>
+                </div>
+                
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; display:flex; gap:5px; align-items:center;">
+                    <i class="far fa-calendar-alt"></i> Previsão: 
+                    {% if current_user.plan_type == 'basic' %}
+                        <b style="color:var(--text-secondary); filter: blur(3px); user-select: none;">25/10/2025</b>
+                        <span style="font-size:9px; background:var(--primary); color:white; padding:2px 6px; border-radius:4px; margin-left:5px;">PREMIUM</span>
+                    {% else %}
+                        <b style="color:var(--primary);">{{ i.previsao_txt }}</b>
+                    {% endif %}
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed rgba(0,0,0,0.05); padding-top:10px;">
+                    <span style="font-size:12px; font-weight:700; color:{{ 'var(--danger)' if i.falta_km < 0 else 'var(--text-main)' }};">
+                        {% if i.falta_km < 0 %}Venceu há {{ "%.0f"|format(i.falta_km * -1) }} km{% else %}Faltam {{ "%.0f"|format(i.falta_km) }} km{% endif %}
+                    </span>
+                    <div style="display:flex; gap:8px;">
+                        <a href="/editar_manutencao/{{ i.id }}" style="color:var(--text-secondary); font-size:14px;"><i class="fas fa-pen"></i></a>
+                        <!-- Botão Concluir com SweetAlert e Input KM -->
+                        <div style="cursor:pointer; color:var(--success); font-size:14px;" 
+                             onclick="confirmarConclusao('{{ i.id }}', '{{ i.item }}', '{{ current_user.plan_type }}', {{ odo }})">
+                           <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align:center; padding:30px; opacity:0.5;">
+                <i class="fas fa-check-circle" style="font-size:40px; color:var(--success); margin-bottom:10px;"></i>
+                <p style="font-size:13px;">Tudo em dia!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- VIEW HISTÓRICO -->
+    <div id="view-historico" style="display:none;">
+        {% if current_user.plan_type == 'basic' %}
+            <div class="glass-card" style="text-align:center; padding:40px 20px;">
+                <div style="width:70px; height:70px; background:rgba(37,99,235,0.1); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:28px; color:var(--primary);">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3 style="margin:0 0 10px 0; color:var(--text-main); font-weight:800;">Valorize seu Carro</h3>
+                <p style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin-bottom:25px;">
+                    Carros com histórico de manutenção comprovado valem até <strong>20% a mais</strong> na revenda.
+                    <br><br>
+                    O Plano Basic não armazena o histórico. Desbloqueie o Premium para criar seu <b>Livro de Revisões Digital</b> automaticamente.
+                </p>
+                <a href="/assinar" class="btn" style="border-radius:50px; background:var(--primary); box-shadow: 0 10px 25px rgba(37,99,235,0.3);">
+                    Quero valorizar meu carro
+                </a>
+            </div>
+        {% else %}
+            
+            <!-- BOTÃO PDF (PREMIUM ONLY) -->
+            <a href="/manutencao/imprimir_historico" target="_blank" class="btn-pdf">
+                <i class="fas fa-file-pdf"></i> BAIXAR LIVRO DE REVISÕES (PDF)
+            </a>
+
+            <!-- LISTA REAL (PREMIUM) -->
+            {% if historico_manutencao %}
+                {% for log in historico_manutencao %}
+                <div class="log-item fade-in">
+                    <div class="log-header">
+                        <span>{{ log.service_date.strftime('%d/%m/%Y') }}</span>
+                        <span><i class="fas fa-check-circle" style="color:var(--success);"></i> Concluído</span>
+                    </div>
+                    <div class="log-title">{{ log.item_name }}</div>
+                    <div class="log-meta">
+                        Realizado com {{ "%.0f"|format(log.service_km) }} km - R$ {{ "%.2f"|format(log.cost or 0) }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="glass-card" style="text-align:center; padding:40px 20px; opacity:0.7;">
+                    <i class="fas fa-book-open" style="font-size:40px; color:var(--secondary); margin-bottom:15px;"></i>
+                    <p style="font-size:13px; color:var(--text-secondary);">
+                        Seu histórico está vazio.<br>
+                        Conclua uma manutenção na aba "Alertas" para começar o registo.
+                    </p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function showTab(tab) {
+        document.getElementById('view-alertas').style.display = tab==='alertas'?'block':'none';
+        document.getElementById('view-historico').style.display = tab==='historico'?'block':'none';
+        document.getElementById('tab-alertas').className = tab==='alertas'?'mode-pill active':'mode-pill';
+        document.getElementById('tab-historico').className = tab==='historico'?'mode-pill active':'mode-pill';
+    }
+
+    function confirmarConclusao(id, item, plan, currentOdo) {
+        if (plan === 'basic') {
+            Swal.fire({
+                title: 'Concluir manutenção?',
+                html: '<span style="font-size:13px">O contador será reiniciado usando o KM estimado atual.<br><br><b style="color:#d33">Atenção:</b> No plano Basic, o histórico não é salvo e você não pode ajustar o KM exato.</span>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2563EB',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Concluir mesmo assim',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/concluir_manutencao/${id}`;
+                }
+            });
+        } else {
+            // Lógica Premium com Input de KM e CUSTO (Modal HTML)
+            Swal.fire({
+                title: 'Registrar Manutenção',
+                html: `
+                    <div style="text-align:left; font-size:13px; margin-bottom:15px;">
+                        Confirme os dados para o Livro de Revisões de <b>${item}</b>:
+                    </div>
+                    <label style="display:block; text-align:left; font-size:11px; font-weight:700; margin-bottom:5px;">KM NO MOMENTO DA TROCA</label>
+                    <input id="swal-km" type="number" class="swal2-input" value="${Math.round(currentOdo)}" style="margin:0 0 15px 0;">
+                    
+                    <label style="display:block; text-align:left; font-size:11px; font-weight:700; margin-bottom:5px;">CUSTO TOTAL (R$)</label>
+                    <input id="swal-cost" type="number" step="0.01" class="swal2-input" placeholder="0.00" style="margin:0;">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Salvar no Histórico',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#2563EB',
+                preConfirm: () => {
+                    const km = document.getElementById('swal-km').value;
+                    const cost = document.getElementById('swal-cost').value;
+                    if (!km) {
+                        Swal.showValidationMessage('Informe a quilometragem');
+                        return false;
+                    }
+                    if (!cost) {
+                        // Opcional: Se não preencher custo, assume 0.
+                        // Mas pode forçar se quiser. Aqui vou deixar passar vazio como 0.
+                    }
+                    return { km: km, cost: cost || '0' };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const km = result.value.km;
+                    const cost = result.value.cost;
+                    // Envia KM e Custo na URL
+                    window.location.href = `/concluir_manutencao/${id}?km_real=${km}&custo_real=${cost}`;
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}
+
+
+

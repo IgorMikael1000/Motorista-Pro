@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Migrate
+Flask-WTF
+Flask-Limiter
+gunicorn
+psycopg2-binary
+firebase-admin
+stripe
+mercadopago
+email_validator
+sentry-sdk[flask]
+blinker
+pytest

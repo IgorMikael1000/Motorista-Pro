@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .premium-blur-box {
+        position: relative; overflow: hidden; border-radius: 20px;
+    }
+    .p-blur-content { filter: blur(6px); opacity: 0.5; pointer-events: none; user-select: none; }
+    .p-lock-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10;
+    }
+    .upsell-badge {
+        background: #FFD700; color: #1E293B; font-size: 10px; font-weight: 800;
+        padding: 4px 10px; border-radius: 12px; margin-bottom: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Calculadora</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Ferramentas Rápidas</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 120px; animation-delay: 0.1s;">
+    
+    <div class="mode-selector">
+        <button onclick="showTab('flex')" id="tab-flex" class="mode-pill active">Abastecimento</button>
+        <button onclick="showTab('corrida')" id="tab-corrida" class="mode-pill">Preço Corrida</button>
+    </div>
+    
+    <!-- ABA FLEX (GRÁTIS) -->
+    <div id="view-flex">
+        <div class="glass-card">
+            <div class="card-title"><span>Qual Compensa?</span></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:5px;">GASOLINA (R$)</label><input type="number" step="0.01" id="p-gas" placeholder="5.80" style="color:var(--danger); font-weight:700;"></div>
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:5px;">ETANOL (R$)</label><input type="number" step="0.01" id="p-eta" placeholder="3.90" style="color:var(--success); font-weight:700;"></div>
+            </div>
+            <button class="btn" onclick="calcFlex()" style="margin-bottom:20px; padding:16px;">COMPARAR</button>
+            <div id="res-flex" style="display:none; text-align:center;">
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:5px;">A melhor opção é:</div>
+                <div id="flex-winner" style="font-size:32px; font-weight:900; margin-bottom:15px;">GASOLINA</div>
+                <div style="display:flex; justify-content:center; gap:20px; font-size:11px; color:var(--text-secondary);">
+                    <div>Custo KM Gas<br><b id="c-km-gas" style="font-size:14px; color:var(--text-main);">R$ 0.00</b></div>
+                    <div>Custo KM Eta<br><b id="c-km-eta" style="font-size:14px; color:var(--text-main);">R$ 0.00</b></div>
+                </div>
+            </div>
+        </div>
+        <form method="post" class="glass-card">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="card-title"><span>Consumo do Carro</span></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">KM/L GASOLINA</label><input type="number" step="0.1" name="consumo_gasolina" value="{{ c_gas }}"></div>
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">KM/L ETANOL</label><input type="number" step="0.1" name="consumo_etanol" value="{{ c_etanol }}"></div>
+            </div>
+            <button type="submit" class="btn" style="margin-top:15px; background:var(--glass-bg); color:var(--text-main); border:1px solid rgba(0,0,0,0.05); box-shadow:none; padding:12px;">Salvar Consumo</button>
+        </form>
+    </div>
+
+    <!-- ABA CORRIDA (BLOQUEIO BASIC) -->
+    <div id="view-corrida" style="display:none;">
+        
+        {% if current_user.plan_type == 'basic' %}
+        <!-- BLOQUEIO -->
+        <div class="glass-card premium-blur-box">
+            <div class="p-blur-content">
+                <div class="card-title"><span>Orçamento Particular</span></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div><label>DISTÂNCIA</label><input type="number" value="15.5"></div>
+                    <div><label>TEMPO</label><input type="number" value="25"></div>
+                </div>
+                <div class="result-val" style="font-size:36px; font-weight:800; color:var(--primary); text-align:center;">R$ 45,00</div>
+            </div>
+            
+            <div class="p-lock-overlay">
+                <span class="upsell-badge">PRO</span>
+                <i class="fas fa-lock" style="font-size:24px; color:var(--primary); margin-bottom:10px;"></i>
+                <p style="font-size:12px; font-weight:700; color:var(--text-main); text-align:center; margin:0 0 15px 0;">
+                    Calcule o preço justo para<br>corridas particulares.
+                </p>
+                <a href="/assinar" class="btn" style="width:auto; padding:10px 25px; font-size:12px;">Desbloquear Calculadora</a>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- LIBERADO (PREMIUM) -->
+        <div class="glass-card">
+            <div class="card-title"><span>Orçamento Particular</span></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                    <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DISTÂNCIA (KM)</label>
+                    <input type="number" id="km" placeholder="0.0" step="0.1" style="font-weight:700;">
+                </div>
+                <div>
+                    <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">TEMPO (MIN)</label>
+                    <input type="number" id="min" placeholder="0" step="1" style="font-weight:700;">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="calcCorrida()" style="margin-bottom:20px; padding:16px;">
+                <i class="fas fa-calculator"></i> CALCULAR
+            </button>
+            
+            <div id="res-corrida" style="display:none; text-align:center; padding:20px; background:rgba(255,255,255,0.5); border-radius:20px; border:1px solid rgba(255,255,255,0.6);">
+                <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; font-weight:700;">Valor Sugerido</span>
+                <div class="result-val" id="val-corrida" style="font-size:36px; font-weight:800; color:var(--primary); margin:5px 0;">R$ 0,00</div>
+            </div>
+        </div>
+        
+        <form method="post" class="glass-card" style="opacity:0.9;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="card-title"><span>Tarifas Base</span></div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary);">TAXA INICIAL (R$)</label>
+                <input type="number" step="0.01" name="taxa_base" value="{{ taxa }}">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">PREÇO KM</label><input type="number" step="0.01" name="preco_km" value="{{ p_km }}"></div>
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">PREÇO MIN</label><input type="number" step="0.01" name="preco_min" value="{{ p_min }}"></div>
+            </div>
+            <button type="submit" class="btn" style="margin-top:15px; background:var(--glass-bg); color:var(--text-main); border:1px solid rgba(0,0,0,0.05); box-shadow:none; padding:12px;">Salvar Tarifas</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function showTab(tab) {
+        document.getElementById('view-flex').style.display = tab==='flex'?'block':'none';
+        document.getElementById('view-corrida').style.display = tab==='corrida'?'block':'none';
+        document.getElementById('tab-flex').className = tab==='flex'?'mode-pill active':'mode-pill';
+        document.getElementById('tab-corrida').className = tab==='corrida'?'mode-pill active':'mode-pill';
+    }
+    
+    // Funções de cálculo só precisam existir se o usuário for premium para evitar erros de console,
+    // mas deixamos aqui pois o JS é estático. O HTML dos inputs não existirá no Basic.
+    function calcCorrida() {
+        const kmIn = document.getElementById('km');
+        const minIn = document.getElementById('min');
+        if(!kmIn || !minIn) return; // Segurança para Basic
+        
+        const km = parseFloat(kmIn.value)||0;
+        const min = parseFloat(minIn.value)||0;
+        const res = parseFloat("{{ taxa }}") + (km * parseFloat("{{ p_km }}")) + (min * parseFloat("{{ p_min }}"));
+        document.getElementById('val-corrida').innerText = "R$ " + res.toFixed(2);
+        document.getElementById('res-corrida').style.display='block';
+    }
+    
+    function calcFlex() {
+        const pg = parseFloat(document.getElementById('p-gas').value);
+        const pe = parseFloat(document.getElementById('p-eta').value);
+        const cg = parseFloat("{{ c_gas }}");
+        const ce = parseFloat("{{ c_etanol }}");
+        if(!pg || !pe) return;
+        const custoG = pg / cg;
+        const custoE = pe / ce;
+        document.getElementById('c-km-gas').innerText = "R$ " + custoG.toFixed(2);
+        document.getElementById('c-km-eta').innerText = "R$ " + custoE.toFixed(2);
+        const winner = document.getElementById('flex-winner');
+        if(custoE < custoG) { winner.innerText = "ETANOL"; winner.style.color = "var(--success)"; } else { winner.innerText = "GASOLINA"; winner.style.color = "var(--danger)"; }
+        document.getElementById('res-flex').style.display='block';
+    }
+</script>
+{% endblock %}
+
+

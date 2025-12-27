@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    /* Estilos do Modal de Nome do App */
+    #appNameModal, #upsellModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:5000; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+    .modal-input-card { background: var(--bg-body); width: 85%; max-width: 320px; padding: 25px; border-radius: 25px; text-align: center; border: 1px solid var(--glass-border); box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: popUp 0.3s; }
+    .modal-input-field { width: 100%; padding: 15px; border-radius: 15px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.8); margin: 15px 0; font-size: 16px; text-align: center; font-weight: 700; color: var(--text-main); outline: none; }
+    .modal-input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    
+    /* Card Upsell */
+    .upsell-card { width:90%; max-width:350px; text-align:center; padding:30px; background: white; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: popUp 0.3s; position: relative; }
+    .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: #aaa; cursor: pointer; }
+
+    @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Novo Lançamento</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Fechamento do Dia</p>
+    </div>
+    <div style="width:40px;"></div> 
+</div>
+
+<form method="post" class="container fade-in" id="formAdd" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div id="offlineAlert" style="display:none; background:rgba(245, 158, 11, 0.15); color:var(--warning); padding:15px; border-radius:20px; margin-bottom:20px; border:1px solid rgba(245, 158, 11, 0.3); font-size:13px; font-weight:700; text-align:center;">
+        <i class="fas fa-wifi"></i> Modo Offline Ativo
+    </div>
+
+    <!-- 1. DADOS GERAIS -->
+    <div class="glass-card">
+        <div class="card-title"><span>Resumo</span></div>
+        <div style="margin-bottom:15px;">
+             <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block; text-transform:uppercase;">Data do Trabalho</label>
+             <input type="date" name="data" value="{{ data_hoje }}" required style="font-weight:700; background:rgba(255,255,255,0.6);">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div>
+                <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block; text-transform:uppercase;">KM Total</label>
+                <input type="number" step="0.1" name="km_percorrido" placeholder="0.0" inputmode="decimal" style="background:rgba(255,255,255,0.6);">
+            </div>
+            <div>
+                <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block; text-transform:uppercase;">Horas (H:M)</label>
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <input type="number" name="horas_qtd" value="{{ h_val }}" placeholder="00" style="text-align:center; background:rgba(255,255,255,0.6);">
+                    <span style="font-weight:bold; color:var(--text-secondary);">:</span>
+                    <input type="number" name="minutos_qtd" value="{{ m_val }}" placeholder="00" style="text-align:center; background:rgba(255,255,255,0.6);">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. FATURAMENTO -->
+    <div class="glass-card" id="cardGanhos" style="border-left: 4px solid var(--success);">
+        <div class="card-title">
+            <span style="color:var(--success);">Faturamento</span>
+            <span id="badgeTotal" style="background:var(--success); color:white; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:800;">R$ 0.00</span>
+        </div>
+        
+        <div style="position:relative; margin-bottom:20px;">
+            <span style="position:absolute; left:20px; top:18px; color:var(--success); font-weight:800; font-size:18px;">R$</span>
+            <input type="number" step="0.01" id="ganhoTotal" name="ganho_bruto" placeholder="0.00" style="padding-left:55px; height:60px; font-weight:800; color:var(--success); font-size:28px; background:rgba(16, 185, 129, 0.08); border-color:rgba(16, 185, 129, 0.3); border-radius:18px;" inputmode="decimal">
+        </div>
+
+        <div style="background:rgba(255,255,255,0.4); border-radius:16px; padding:15px; border:1px solid rgba(0,0,0,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary);">DETALHAR GANHOS</label>
+                <!-- Botão Editar Nome (Oculto por padrão, aparece via JS) -->
+                <div id="btnEditCustomName" onclick="handleEditAppName()" style="display:none; cursor:pointer; font-size:10px; color:var(--primary); font-weight:700; align-items:center; gap:5px;">
+                    <i class="fas fa-pen"></i> Personalizar '{{ custom_app_name }}'
+                </div>
+            </div>
+
+            <div class="expense-adder" style="display:flex; gap:10px; margin-bottom:10px; align-items:flex-end;">
+                <div style="flex:1; position:relative;">
+                    <input type="number" id="newEarnValue" placeholder="R$ 0.00" style="padding-left:10px; color:var(--success); font-weight:800;" inputmode="decimal">
+                </div>
+                <div style="flex:1.5;">
+                    <select id="newEarnType" onchange="checkCustomAppVisibility()">
+                        <option value="ganho_uber">Uber</option>
+                        <option value="ganho_99">99 Pop</option>
+                        <option value="ganho_part">Particular</option>
+                        <option value="ganho_outros" id="optCustom">{{ custom_app_name }}</option>
+                    </select>
+                </div>
+                <button type="button" onclick="addEarning()" style="background:var(--success); color:white; border:none; border-radius:14px; width:52px; height:52px; cursor:pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); display:flex; align-items:center; justify-content:center;">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div id="earningList" style="display:none; border-top:1px dashed rgba(0,0,0,0.1); margin-top:10px; padding-top:10px;"></div>
+        </div>
+
+        <input type="hidden" name="ganho_uber" id="ganho_uber" value="0">
+        <input type="hidden" name="ganho_99" id="ganho_99" value="0">
+        <input type="hidden" name="ganho_part" id="ganho_part" value="0">
+        <input type="hidden" name="ganho_out" id="ganho_out" value="0">
+    </div>
+
+    <!-- 3. CORRIDAS -->
+    <div class="glass-card">
+        <div class="card-title"><span>Quantidade de Viagens</span></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:8px;">
+            <div><label style="font-size:9px; text-align:center; display:block; font-weight:700; color:var(--text-secondary); margin-bottom:2px;">UBER</label><input type="number" name="qtd_uber" placeholder="0" style="text-align:center; padding:10px; font-weight:700;"></div>
+            <div><label style="font-size:9px; text-align:center; display:block; font-weight:700; color:var(--text-secondary); margin-bottom:2px;">99</label><input type="number" name="qtd_99" placeholder="0" style="text-align:center; padding:10px; font-weight:700;"></div>
+            <div><label style="font-size:9px; text-align:center; display:block; font-weight:700; color:var(--text-secondary); margin-bottom:2px;">PART</label><input type="number" name="qtd_part" placeholder="0" style="text-align:center; padding:10px; font-weight:700;"></div>
+            <div><label id="lblCustomQtd" style="font-size:9px; text-align:center; display:block; font-weight:700; color:var(--text-secondary); margin-bottom:2px; white-space:nowrap; overflow:hidden;">{{ custom_app_name[:3] }}</label><input type="number" name="qtd_outros" placeholder="0" style="text-align:center; padding:10px; font-weight:700;"></div>
+        </div>
+    </div>
+
+    <!-- 4. DESPESAS -->
+    <div class="glass-card" id="cardDespesas" style="border-left: 4px solid var(--danger);">
+        <div class="card-title"><span style="color:var(--danger);">Despesas do Dia</span></div>
+        
+        <div class="expense-adder" style="display:flex; gap:10px; margin-bottom:15px; align-items:flex-end;">
+            <div style="flex:1; position:relative;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">VALOR (R$)</label>
+                <input type="number" id="newExpValue" placeholder="0.00" style="padding-left:15px; color:var(--danger); font-weight:800;" inputmode="decimal">
+            </div>
+            <div style="flex:1.5;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">CATEGORIA</label>
+                <select id="newExpType">
+                    <option value="total_combustivel">Combustível</option>
+                    <option value="total_alimentacao">Alimentação</option>
+                    <option value="total_manutencao">Manutenção</option>
+                </select>
+            </div>
+            <button type="button" onclick="addExpense()" style="background:var(--primary-gradient); color:white; border:none; border-radius:14px; width:52px; height:52px; cursor:pointer; box-shadow: 0 8px 20px rgba(37,99,235,0.25); display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <div id="expenseList" style="display:none; background:rgba(255,255,255,0.5); padding:15px; border-radius:16px; border:1px solid rgba(0,0,0,0.05);"></div>
+
+        <input type="hidden" name="total_combustivel" id="total_combustivel" value="0">
+        <input type="hidden" name="total_alimentacao" id="total_alimentacao" value="0">
+        <input type="hidden" name="total_manutencao" id="total_manutencao" value="0">
+    </div>
+
+    <button type="submit" id="btnSalvarDia" class="btn" style="margin-bottom:50px; font-size:16px; padding:18px; border-radius: 50px; background: var(--primary-gradient); color: white; border: none; width: 100%; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <i class="fas fa-check"></i> SALVAR LANÇAMENTO
+    </button>
+</form>
+
+<!-- MODAL NOME APP -->
+<div id="appNameModal">
+    <div class="modal-input-card">
+        <h3 style="margin:0 0 10px 0; color:var(--text-main);">Personalizar App</h3>
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:20px;">Digite o nome do aplicativo local que você usa:</p>
+        <input type="text" id="newAppNameInput" class="modal-input-field" placeholder="Ex: Urban, 99Moto..." maxlength="10">
+        <div style="display:flex; gap:10px;">
+            <button onclick="document.getElementById('appNameModal').style.display='none'" style="flex:1; background:transparent; border:1px solid var(--text-secondary); color:var(--text-secondary); padding:12px; border-radius:15px; font-weight:700; cursor:pointer;">Cancelar</button>
+            <button onclick="saveAppName()" style="flex:1; background:var(--primary); color:white; border:none; padding:12px; border-radius:15px; font-weight:700; cursor:pointer;">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL UPSELL -->
+<div id="upsellModal">
+    <div class="upsell-card">
+        <button class="close-modal" onclick="document.getElementById('upsellModal').style.display='none'">&times;</button>
+        <div style="width:70px; height:70px; background:rgba(37,99,235,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; color:var(--primary); font-size:30px;"><i class="fas fa-crown"></i></div>
+        <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size:20px; font-weight:800;">Personalize seu App</h3>
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:25px; line-height:1.5;">O plano Basic usa o nome padrão "Outros".<br>No Premium, você pode renomear para o app da sua cidade (ex: Urban, Indrive) e organizar melhor.</p>
+        <a href="/assinar" class="btn" style="border-radius:50px; background:var(--primary); box-shadow: 0 10px 30px rgba(37,99,235,0.4);">Desbloquear Edição</a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function checkConnection() {
+        const alert = document.getElementById('offlineAlert'); const btn = document.getElementById('btnSalvarDia');
+        if (!navigator.onLine) { alert.style.display = 'block'; btn.innerHTML = '<i class="fas fa-save"></i> SALVAR OFFLINE'; btn.style.background = 'var(--warning)'; } 
+        else { alert.style.display = 'none'; btn.innerHTML = '<i class="fas fa-check"></i> SALVAR LANÇAMENTO'; btn.style.background = 'var(--primary-gradient)'; }
+    }
+    window.addEventListener('online', checkConnection); window.addEventListener('offline', checkConnection); checkConnection();
+
+    document.getElementById('formAdd').addEventListener('submit', function(e) {
+        if (!navigator.onLine) {
+            e.preventDefault();
+            const formData = new FormData(this); const data = {}; formData.forEach((value, key) => data[key] = value); data.timestamp = Date.now();
+            let pending = JSON.parse(localStorage.getItem('pending_uploads') || '[]'); pending.push(data); localStorage.setItem('pending_uploads', JSON.stringify(pending));
+            alert('Salvo offline!'); window.location.href = '/?msg=offline_saved';
+        }
+    });
+
+    let earnings = [];
+    const mainInput = document.getElementById('ganhoTotal');
+    const badge = document.getElementById('badgeTotal');
+
+    // CONTROLE VISUAL DO BOTÃO DE EDITAR (ITEM 1)
+    function checkCustomAppVisibility() {
+        const select = document.getElementById('newEarnType');
+        const btn = document.getElementById('btnEditCustomName');
+        if (select.value === 'ganho_outros') {
+            btn.style.display = 'flex';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function addEarning() {
+        const val = parseFloat(document.getElementById('newEarnValue').value); 
+        const typeSelect = document.getElementById('newEarnType');
+        
+        if (val > 0) { 
+            earnings.push({ val: val, type: typeSelect.value, name: typeSelect.options[typeSelect.selectedIndex].text }); 
+            document.getElementById('newEarnValue').value = ''; 
+            renderEarnings(); 
+        }
+    }
+
+    function removeEarning(idx) { 
+        earnings.splice(idx, 1); 
+        renderEarnings(); 
+    }
+
+    function renderEarnings() {
+        const list = document.getElementById('earningList'); 
+        const sums = { ganho_uber: 0, ganho_99: 0, ganho_part: 0, ganho_outros: 0 };
+        list.innerHTML = '';
+        let totalSum = 0;
+
+        if(earnings.length > 0) { 
+            list.style.display = 'block'; 
+            earnings.forEach((e, i) => { 
+                sums[e.type] += e.val; 
+                totalSum += e.val;
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed rgba(0,0,0,0.1); color:var(--text-main);"><span>${e.name}</span><span style="font-weight:700; color:var(--success);">R$ ${e.val.toFixed(2)} <i class="fas fa-times" style="color:var(--text-secondary); margin-left:10px; cursor:pointer;" onclick="removeEarning(${i})"></i></span></div>`; 
+            }); 
+        } else { 
+            list.style.display = 'none'; 
+        }
+
+        document.getElementById('ganho_uber').value = sums.ganho_uber;
+        document.getElementById('ganho_99').value = sums.ganho_99;
+        document.getElementById('ganho_part').value = sums.ganho_part;
+        document.getElementById('ganho_out').value = sums.ganho_outros; 
+        
+        mainInput.value = totalSum > 0 ? totalSum.toFixed(2) : '';
+        badge.innerText = "R$ " + totalSum.toFixed(2);
+    }
+    
+    mainInput.addEventListener('input', function() {
+        if(earnings.length === 0) badge.innerText = "R$ " + (parseFloat(this.value)||0).toFixed(2);
+    });
+
+    let expenses = [];
+    function addExpense() {
+        const val = parseFloat(document.getElementById('newExpValue').value); const typeSelect = document.getElementById('newExpType');
+        if (val > 0) { expenses.push({ val: val, type: typeSelect.value, name: typeSelect.options[typeSelect.selectedIndex].text }); document.getElementById('newExpValue').value = ''; renderExpenses(); }
+    }
+    function removeExpense(idx) { expenses.splice(idx, 1); renderExpenses(); }
+    function renderExpenses() {
+        const list = document.getElementById('expenseList'); const sums = { total_combustivel: 0, total_alimentacao: 0, total_manutencao: 0 }; list.innerHTML = '';
+        if(expenses.length > 0) { list.style.display = 'block'; expenses.forEach((e, i) => { sums[e.type] += e.val; list.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed rgba(0,0,0,0.1); color:var(--text-main);"><span>${e.name}</span><span style="font-weight:700; color:var(--danger);">R$ ${e.val.toFixed(2)} <i class="fas fa-times" style="color:var(--text-secondary); margin-left:10px; cursor:pointer;" onclick="removeExpense(${i})"></i></span></div>`; }); } else { list.style.display = 'none'; }
+        document.getElementById('total_combustivel').value = sums.total_combustivel; document.getElementById('total_alimentacao').value = sums.total_alimentacao; document.getElementById('total_manutencao').value = sums.total_manutencao;
+    }
+
+    function handleEditAppName() {
+        const plan = "{{ current_user.plan_type }}";
+        if (plan === 'basic') {
+            document.getElementById('upsellModal').style.display = 'flex';
+        } else {
+            document.getElementById('newAppNameInput').value = "{{ custom_app_name }}";
+            document.getElementById('appNameModal').style.display = 'flex';
+        }
+    }
+
+    function saveAppName() {
+        const newName = document.getElementById('newAppNameInput').value;
+        if (newName) {
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            fetch('/update_app_name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ name: newName })
+            }).then(() => {
+                const opt = document.getElementById('optCustom');
+                if(opt) opt.text = newName.toUpperCase();
+                document.getElementById('lblCustomQtd').innerText = newName.toUpperCase().substring(0,3);
+                document.getElementById('appNameModal').style.display = 'none';
+            });
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}
+
+
+

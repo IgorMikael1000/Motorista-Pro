@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .history-card { 
+        background: var(--glass-bg); backdrop-filter: var(--backdrop-blur);
+        border: var(--glass-border); box-shadow: var(--glass-shadow);
+        border-radius: 20px; padding: 15px; margin-bottom: 12px; 
+        display: grid; grid-template-columns: auto 1fr auto; gap: 15px; align-items: center;
+        text-decoration: none; position: relative; overflow: hidden;
+        transition: transform 0.2s;
+    }
+    .history-card:active { transform: scale(0.98); background: rgba(255,255,255,0.9); }
+    .history-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary); }
+
+    .h-date-group { display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 8px 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); min-width: 50px; }
+    .h-day { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1; }
+    .h-month { font-size: 10px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-top: 2px; }
+
+    .h-info { display: flex; flex-direction: column; gap: 2px; }
+    .h-title { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .h-badges { display: flex; gap: 8px; font-size: 10px; color: var(--text-secondary); }
+    
+    .h-values { text-align: right; display: flex; flex-direction: column; justify-content: center; }
+    .h-gain { font-size: 14px; font-weight: 800; color: var(--success); }
+    .h-expense { font-size: 10px; font-weight: 600; color: var(--danger); opacity: 0.8; margin-top: 2px; }
+    
+    /* Estilo do Botão Carregar Mais */
+    .btn-load-more {
+        background: white; color: var(--primary); border: 1px solid var(--primary-light);
+        padding: 12px 30px; border-radius: 50px; font-weight: 700; font-size: 13px;
+        cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        display: inline-flex; align-items: center; gap: 8px;
+        transition: 0.2s;
+    }
+    .btn-load-more:active { transform: scale(0.95); background: #f8fafc; }
+    .htmx-indicator { display: none; margin-left: 10px; }
+    .htmx-request .htmx-indicator { display: inline; }
+    .htmx-request.btn-load-more { opacity: 0.7; pointer-events: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:16px; color:var(--text-main); font-weight: 800;">Histórico</h2>
+        <p style="margin:0; font-size:11px; color:var(--text-secondary);">Seu Livro Caixa</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom:120px; animation-delay: 0.1s;">
+    
+    <!-- FILTRO DE DATA -->
+    <div class="filter-group">
+        <div class="filter-btn {{ 'active' if tipo == 'dia' else '' }}" onclick="openPicker('dia')">
+            <span class="fb-label">DIA</span>
+            <span class="fb-value">{{ filter_label if tipo == 'dia' else 'Todos' }}</span>
+            <input type="date" id="picker-dia" class="filter-input" onchange="submitHist(this.value, 'dia')">
+        </div>
+        <div class="filter-btn {{ 'active' if tipo == 'semana' else '' }}" onclick="openPicker('semana')">
+            <span class="fb-label">SEMANA</span>
+            <span class="fb-value">{{ filter_label|safe if tipo == 'semana' else 'Filtrar' }}</span>
+            <select onchange="submitHist(this.value, 'semana')" id="picker-semana" class="filter-input">
+                <option value="" disabled selected>Selecionar</option>
+                {% for week in week_options %}
+                    <option value="{{ week.value }}" {% if tipo == 'semana' and valor == week.value %}selected{% endif %}>{{ week.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-btn {{ 'active' if tipo == 'mes' else '' }}" onclick="openPicker('mes')">
+            <span class="fb-label">MÊS</span>
+            <span class="fb-value">{{ filter_label if tipo == 'mes' else 'Filtrar' }}</span>
+            <input type="month" id="picker-mes" class="filter-input" onchange="submitHist(this.value, 'mes')">
+        </div>
+    </div>
+
+    <!-- LISTA DE CARDS (RENDERIZAÇÃO INICIAL + INJEÇÃO HTMX) -->
+    <div id="history-list-container">
+        {% if registros %}
+            {% include 'partials/history_list.html' %}
+        {% else %}
+            <div style="text-align:center; padding:80px 0; color:var(--text-secondary); opacity:0.6;">
+                <i class="far fa-calendar-times" style="font-size:40px; margin-bottom:15px;"></i>
+                <p>Nenhum registo encontrado.</p>
+                {% if tipo and tipo != 'dia' and tipo != 'mes' %}
+                <a href="/historico" style="font-size:12px; color:var(--primary); font-weight:700;">Limpar Filtro</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function openPicker(tipo) {
+        const el = document.getElementById('picker-' + tipo);
+        if(el) {
+            if(el.showPicker) el.showPicker();
+            else el.click();
+        }
+    }
+    function submitHist(valor, tipo) {
+        if(!valor) return;
+        window.location.href = `/historico?tipo=${tipo}&valor=${valor}`;
+    }
+</script>
+{% endblock %}
+{% endblock %}
+
+
+

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="loading-indicator" class="htmx-indicator" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999; background:rgba(255,255,255,0.95); color:var(--primary); padding:15px 25px; border-radius:30px; font-weight:800; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; pointer-events: none;">
+    <i class="fas fa-spinner fa-spin"></i> Atualizando...
+</div>
+
+<div class="app-shell">
+    
+    <!-- HEADER -->
+    <div class="header fade-in">
+        <div class="profile-section" style="cursor: default;">
+            <!-- FOTO DO PERFIL (LÓGICA CORRIGIDA) -->
+            {% if current_user.profile_image %}
+                <img src="{{ current_user.profile_image }}" style="width:42px; height:42px; border-radius:14px; object-fit:cover; border:1px solid rgba(37,99,235,0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+            {% else %}
+                <div class="avatar-generic"><i class="fas fa-user"></i></div>
+            {% endif %}
+            
+            <div class="greeting">
+                <p>Olá,</p>
+                <h1>{{ current_user.nome.split()[0] }}</h1>
+            </div>
+        </div>
+        <a href="/notifications" class="notification-btn">
+            <i class="far fa-bell"></i>
+            {% if unread_notifications > 0 %}<div class="badge-dot"></div>{% endif %}
+        </a>
+    </div>
+
+    <!-- CONTEÚDO -->
+    <div class="container">
+        <div id="dashboard-content">
+            {% include 'partials/dashboard_content.html' %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Scripts de UX -->
+<script>
+    function centerActiveElement() {
+        const container = document.querySelector('.date-strip-container');
+        const active = document.querySelector('.date-pill.active');
+        if (container && active) {
+            const containerWidth = container.offsetWidth;
+            const itemWidth = active.offsetWidth;
+            const itemLeft = active.offsetLeft;
+            const scrollPos = itemLeft - (containerWidth / 2) + (itemWidth / 2);
+            container.scrollTo({ left: scrollPos, behavior: 'smooth' });
+        }
+    }
+    
+    document.addEventListener("DOMContentLoaded", centerActiveElement);
+    document.body.addEventListener('htmx:afterSwap', centerActiveElement);
+</script>
+{% endblock %}
+
+
+

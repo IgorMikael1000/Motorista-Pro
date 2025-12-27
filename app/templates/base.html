@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Motorista Pro</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#F0F8FF">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        #cookie-banner { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(15, 23, 42, 0.95); color: white; padding: 20px; border-radius: 20px; z-index: 20000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .cb-content { display: flex; flex-direction: column; gap: 15px; }
+        .cb-text { font-size: 13px; line-height: 1.5; opacity: 0.9; }
+        .cb-actions { display: flex; gap: 10px; }
+        .cb-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .cb-accept { background: var(--primary, #2563EB); color: white; }
+    </style>
+</head>
+<body class="{{ 'dark-mode' if request.cookies.get('darkMode') == 'true' else '' }}">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div id="toast"><i class="fas fa-check-circle"></i> <span>Ação realizada</span></div>
+    
+    {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated %}
+    
+    <div class="floating-nav">
+        <a href="/" class="nav-item {{ 'active' if request.path == '/' }}"><i class="fas fa-home"></i></a>
+        <a href="/historico" class="nav-item {{ 'active' if '/historico' in request.path }}"><i class="fas fa-chart-bar"></i></a>
+        <a href="/adicionar" class="nav-fab-menu"><i class="fas fa-plus"></i></a>
+        <a href="/agenda" class="nav-item {{ 'active' if '/agenda' in request.path }}"><i class="far fa-calendar-alt"></i></a>
+        <a href="#" class="nav-item" onclick="toggleDrawer(event)"><i class="fas fa-bars"></i></a>
+    </div>
+
+    <div class="drawer-overlay" onclick="toggleDrawer(event)"></div>
+    <div class="drawer-panel">
+        <div class="drawer-header">
+            <div class="user-row">
+                <div class="user-avatar-drawer">
+                    {% if current_user.profile_image %}<img src="{{ current_user.profile_image }}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">{% else %}<i class="fas fa-user"></i>{% endif %}
+                </div>
+                <div class="user-data-drawer">
+                    <h3>{{ current_user.nome.split()[0] }}</h3>
+                    <p style="margin-bottom:5px;">{{ current_user.email|truncate(20) }}</p>
+                    {% if current_user.plan_type == 'premium' %}
+                        {% if current_user.category == 'trial' %}
+                            <span class="badge-premium-drawer" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); font-size: 10px; padding: 4px 10px; color: white;"><i class="fas fa-clock"></i> TESTE 7 DIAS</span>
+                        {% else %}
+                            <span class="badge-premium-drawer" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; font-size: 10px; padding: 4px 12px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);"><i class="fas fa-crown" style="font-size: 9px;"></i> PREMIUM</span>
+                        {% endif %}
+                    {% else %}
+                        <a href="/assinar" style="background:#F59E0B; color:#78350F; font-size:10px; padding:3px 10px; border-radius:12px; font-weight:800; text-decoration:none; display:inline-block;">BÁSICO (Fazer Upgrade)</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="drawer-content">
+            <div class="menu-label">Gestão</div>
+            
+            <!-- LINK NOVO: MONITORAMENTO DINÂMICO -->
+            <a href="/monitoramento" class="drawer-item"><div class="drawer-icon" style="color:#10B981; background:rgba(16, 185, 129, 0.1);"><i class="fas fa-robot"></i></div><span class="drawer-text">Monitoramento Dinâmico</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            
+            <a href="/relatorios" class="drawer-item"><div class="drawer-icon"><i class="fas fa-chart-pie"></i></div><span class="drawer-text">Relatórios</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            <a href="/calculadora" class="drawer-item"><div class="drawer-icon"><i class="fas fa-calculator"></i></div><span class="drawer-text">Calculadora</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            <a href="/manutencao" class="drawer-item"><div class="drawer-icon"><i class="fas fa-wrench"></i></div><span class="drawer-text">Manutenção</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+
+            <div class="menu-label" style="margin-top: 20px;">Social</div>
+            <a href="/conquistas" class="drawer-item"><div class="drawer-icon"><i class="fas fa-trophy"></i></div><span class="drawer-text">Conquistas</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            <a href="/indique" class="drawer-item"><div class="drawer-icon"><i class="fas fa-gift"></i></div><span class="drawer-text">Indique e Ganhe</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+
+            <div class="menu-label" style="margin-top: 20px;">Conta</div>
+            <a href="#" class="drawer-item" id="btnInstall" onclick="installApp(event)" style="display:none; background: rgba(37, 99, 235, 0.1); border: 1px solid var(--primary);"><div class="drawer-icon" style="background:white; color:var(--primary);"><i class="fas fa-download"></i></div><span class="drawer-text" style="color:var(--primary); font-weight:700;">Instalar App</span></a>
+            <a href="/configuracoes" class="drawer-item"><div class="drawer-icon"><i class="fas fa-cog"></i></div><span class="drawer-text">Ajustes</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            <a href="/assinatura" class="drawer-item"><div class="drawer-icon"><i class="fas fa-crown"></i></div><span class="drawer-text">Meu Plano</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+            <a href="/suporte" class="drawer-item"><div class="drawer-icon"><i class="fas fa-headset"></i></div><span class="drawer-text">Suporte</span><i class="fas fa-chevron-right drawer-arrow"></i></a>
+        </div>
+        
+        <div class="drawer-footer">
+            <a href="/logout" class="btn-logout-drawer"><i class="fas fa-sign-out-alt"></i> Sair da Conta</a>
+        </div>
+    </div>
+    
+    <div id="infoModal" class="global-modal-overlay" onclick="closeGlobalModal('infoModal')">
+        <div class="global-modal-card" onclick="event.stopPropagation()">
+            <div class="info-icon-circle"><i id="infoIcon"></i></div>
+            <h3 id="infoTitle" class="info-title"></h3>
+            <p id="infoText" class="info-text"></p>
+            <button class="info-btn" onclick="closeGlobalModal('infoModal')">ENTENDI</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="cookie-banner">
+        <div class="cb-content">
+            <div class="cb-text"><b>🍪 Usamos Cookies</b><br>Utilizamos cookies essenciais para manter o seu login seguro e melhorar a sua experiência.</div>
+            <div class="cb-actions"><button class="cb-btn cb-accept" onclick="acceptCookies()">Aceitar e Continuar</button></div>
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => { event.detail.headers['X-CSRFToken'] = '{{ csrf_token() }}'; });
+        const toast = document.getElementById('toast');
+        window.showToast = (msg) => { toast.querySelector('span').innerText = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000); };
+        function toggleDrawer(e) { if(e) e.preventDefault(); const overlay = document.querySelector('.drawer-overlay'); const panel = document.querySelector('.drawer-panel'); if (panel.classList.contains('open')) { panel.classList.remove('open'); setTimeout(() => overlay.classList.remove('open'), 300); } else { overlay.classList.add('open'); requestAnimationFrame(() => panel.classList.add('open')); } }
+        function closeGlobalModal(id) { const el = document.getElementById(id); if(el) { el.classList.remove('open'); setTimeout(() => el.style.display = 'none', 10); } }
+        window.openGlobalModal = function(id) { const el = document.getElementById(id); if(el) { el.style.display = 'flex'; setTimeout(() => el.classList.add('open'), 10); } }
+        function acceptCookies() { localStorage.setItem('cookies_accepted', 'true'); document.getElementById('cookie-banner').style.display = 'none'; }
+        document.addEventListener("DOMContentLoaded", function() { if (!localStorage.getItem('cookies_accepted')) { setTimeout(() => document.getElementById('cookie-banner').style.display = 'block', 1000); } });
+    </script>
+    <script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

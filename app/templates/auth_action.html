@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ação Necessária - Motorista Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-body: #F0F4F8; --text-main: #0F172A; --text-secondary: #64748B; --primary: #2563EB; --primary-gradient: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); --glass-bg: rgba(255, 255, 255, 0.85); --glass-border: 1px solid rgba(255, 255, 255, 0.9); --glass-shadow: 0 8px 32px 0 rgba(30, 58, 138, 0.08); }
+        body { margin: 0; padding: 20px; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; opacity: 0.5; }
+        .blob-1 { top: -10%; right: -20%; width: 400px; height: 400px; background: #BFDBFE; }
+        
+        .card { background: var(--glass-bg); backdrop-filter: blur(20px); border: var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 350px; text-align: center; }
+        
+        .action-icon { font-size: 50px; margin-bottom: 20px; display: block; }
+        .success-icon { color: #10B981; }
+        .error-icon { color: #DC2626; }
+        .key-icon { color: #2563EB; background: rgba(37, 99, 235, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 32px; }
+        
+        h3 { font-size: 20px; font-weight: 800; margin: 0 0 10px 0; color: var(--text-main); }
+        p { color: var(--text-secondary); font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        
+        .loader { display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(37, 99, 235, 0.2); border-left-color: #2563EB; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .btn-main { background: var(--primary-gradient); border: none; width: 100%; padding: 16px; border-radius: 16px; color: white; font-weight: 800; font-size: 15px; cursor: pointer; text-decoration: none; display: inline-block; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); transition: transform 0.2s; box-sizing: border-box; }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-outline { background: white; border: 1px solid rgba(0,0,0,0.1); color: var(--text-main); padding: 12px 25px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 13px; display: inline-block; }
+        
+        input { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.6); color: var(--text-main); font-family: inherit; font-size: 14px; box-sizing: border-box; outline: none; margin-bottom: 15px; }
+        input:focus { background: white; border-color: #2563EB; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+
+        #view-loading, #view-success, #view-error, #view-reset-password { display: none; }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+
+    <div class="card">
+        <!-- 1. LOADING -->
+        <div id="view-loading" style="display:block;">
+            <div class="loader"></div>
+            <h3>Aguarde...</h3>
+            <p>Estamos validando suas informações.</p>
+        </div>
+
+        <!-- 2. SUCESSO -->
+        <div id="view-success">
+            <i class="fas fa-check-circle action-icon success-icon"></i>
+            <h3>Tudo Pronto!</h3>
+            <p id="success-msg">Operação realizada com sucesso.</p>
+            <a href="/login" class="btn-main">ENTRAR AGORA</a>
+        </div>
+
+        <!-- 3. ERRO -->
+        <div id="view-error">
+            <i class="fas fa-times-circle action-icon error-icon"></i>
+            <h3>Algo deu errado</h3>
+            <p id="error-msg">O link é inválido ou expirou.</p>
+            <a href="/login" class="btn-outline">Voltar para Login</a>
+        </div>
+
+        <!-- 4. REDEFINIR SENHA -->
+        <div id="view-reset-password">
+            <div class="key-icon"><i class="fas fa-key"></i></div>
+            <h3>Nova Senha</h3>
+            <p>Crie uma senha segura para acessar sua conta.</p>
+            
+            <form id="newPassForm">
+                <input type="password" id="newPassword" placeholder="Nova Senha (mín. 6 dígitos)" required minlength="6">
+                <button type="submit" class="btn-main">DEFINIR SENHA</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        // Configuração mantida do original
+        const firebaseConfig = { apiKey: "AIzaSyAn_FPF2jSH2jFR9MAG6Xo9mXmodTsQCpA", authDomain: "motoristapro-f9beb.firebaseapp.com", projectId: "motoristapro-f9beb", storageBucket: "motoristapro-f9beb.firebasestorage.app", messagingSenderId: "990151984574", appId: "1:990151984574:web:82bd63cc391c372ea9a5ef" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const mode = "{{ mode }}";
+        const actionCode = "{{ code }}";
+
+        const views = { loading: document.getElementById('view-loading'), success: document.getElementById('view-success'), error: document.getElementById('view-error'), reset: document.getElementById('view-reset-password') };
+        function showView(name) { Object.values(views).forEach(el => el.style.display = 'none'); views[name].style.display = 'block'; }
+
+        async function handleAction() {
+            try {
+                if (mode === 'verifyEmail') {
+                    await applyActionCode(auth, actionCode);
+                    document.getElementById('success-msg').innerText = "E-mail verificado! Sua conta está ativa.";
+                    showView('success');
+                } 
+                else if (mode === 'resetPassword') {
+                    await verifyPasswordResetCode(auth, actionCode);
+                    showView('reset');
+                    document.getElementById('newPassForm').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const newPass = document.getElementById('newPassword').value;
+                        showView('loading');
+                        try {
+                            await confirmPasswordReset(auth, actionCode, newPass);
+                            document.getElementById('success-msg').innerText = "Senha alterada com sucesso!";
+                            showView('success');
+                        } catch (err) {
+                            document.getElementById('error-msg').innerText = "Erro ao salvar: " + err.message;
+                            showView('error');
+                        }
+                    });
+                } 
+                else { throw new Error("Modo desconhecido."); }
+            } catch (error) {
+                let msg = "Link inválido ou expirado.";
+                if(error.code === 'auth/expired-action-code') msg = "Este link já expirou.";
+                if(error.code === 'auth/invalid-action-code') msg = "Link inválido.";
+                document.getElementById('error-msg').innerText = msg;
+                showView('error');
+            }
+        }
+        handleAction();
+    </script>
+</body>
+</html>
+
+

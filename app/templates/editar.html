@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/historico" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Editar</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Corrigir Lançamento</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<form method="post" class="container fade-in" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- DATA E ESFORÇO -->
+    <div class="glass-card">
+        <div class="card-title"><span>Dados Gerais</span></div>
+        <div style="margin-bottom:15px;">
+             <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DATA</label>
+             <input type="date" name="data" value="{{ registro['data'] }}" required style="font-weight:700; background:rgba(255,255,255,0.6);">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div>
+                <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">KM</label>
+                <input type="number" step="0.1" name="km_percorrido" value="{{ registro['km_percorrido'] }}" inputmode="decimal">
+            </div>
+            <div>
+                <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">HORAS</label>
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <input type="number" name="horas_qtd" value="{{ h_val }}" placeholder="00" style="text-align:center;">
+                    <span style="font-weight:bold; color:var(--text-secondary);">:</span>
+                    <input type="number" name="minutos_qtd" value="{{ m_val }}" placeholder="00" style="text-align:center;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FATURAMENTO -->
+    <div class="glass-card">
+        <div class="card-title"><span>Financeiro</span></div>
+        
+        <label style="font-size:11px; color:var(--text-secondary); margin-bottom:8px; display:block; font-weight:700;">TOTAL BRUTO</label>
+        <div style="position:relative; margin-bottom:20px;">
+            <span style="position:absolute; left:15px; top:16px; color:var(--success); font-weight:800;">R$</span>
+            <input type="number" step="0.01" id="ganhoTotal" name="ganho_bruto" value="{{ registro['ganho_bruto'] }}" style="padding-left:45px; font-weight:800; color:var(--success); font-size:24px; background:rgba(16, 185, 129, 0.05); border-color:rgba(16, 185, 129, 0.2);" inputmode="decimal">
+        </div>
+
+        <div style="border-top:1px dashed rgba(0,0,0,0.1); padding-top:15px;">
+            <p style="font-size:10px; color:var(--text-secondary); margin-bottom:15px; font-weight:700; text-transform:uppercase;">Apps (Opcional)</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">UBER</label><input type="number" step="0.01" name="ganho_uber" class="calc-input" value="{{ registro['ganho_uber'] }}" inputmode="decimal"></div>
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">99</label><input type="number" step="0.01" name="ganho_99" class="calc-input" value="{{ registro['ganho_99'] }}" inputmode="decimal"></div>
+            </div>
+             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">PART</label><input type="number" step="0.01" name="ganho_part" class="calc-input" value="{{ registro['ganho_part'] }}" inputmode="decimal"></div>
+                <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">OUT</label><input type="number" step="0.01" name="ganho_outros" class="calc-input" value="{{ registro['ganho_outros'] }}" inputmode="decimal"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORRIDAS -->
+    <div class="glass-card">
+        <div class="card-title"><span>Qtd. Corridas</span></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+            <div><label style="font-size:10px; text-align:center; display:block; font-weight:700; color:var(--text-secondary);">UBER</label><input type="number" name="qtd_uber" value="{{ registro['qtd_uber'] }}" style="text-align:center; padding:10px;"></div>
+            <div><label style="font-size:10px; text-align:center; display:block; font-weight:700; color:var(--text-secondary);">99</label><input type="number" name="qtd_99" value="{{ registro['qtd_99'] }}" style="text-align:center; padding:10px;"></div>
+            <div><label style="font-size:10px; text-align:center; display:block; font-weight:700; color:var(--text-secondary);">PART</label><input type="number" name="qtd_part" value="{{ registro['qtd_part'] }}" style="text-align:center; padding:10px;"></div>
+            <div><label style="font-size:10px; text-align:center; display:block; font-weight:700; color:var(--text-secondary);">OUT</label><input type="number" name="qtd_outros" value="{{ registro['qtd_outros'] }}" style="text-align:center; padding:10px;"></div>
+        </div>
+    </div>
+
+    <!-- DESPESAS -->
+    <div class="glass-card" style="border-left: 4px solid var(--danger);">
+        <div class="card-title"><span style="color:var(--danger);">Despesas</span></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">COMBUSTÍVEL</label><input type="number" step="0.01" name="despesa_combustivel" value="{{ registro['despesa_combustivel'] }}" style="color:var(--danger); font-weight:700;"></div>
+            <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">ALIMENTAÇÃO</label><input type="number" step="0.01" name="despesa_alimentacao" value="{{ registro['despesa_alimentacao'] }}" style="color:var(--danger); font-weight:700;"></div>
+        </div>
+        <div><label style="font-size:10px; font-weight:700; color:var(--text-secondary);">MANUTENÇÃO</label><input type="number" step="0.01" name="despesa_manutencao" value="{{ registro['despesa_manutencao'] }}" style="color:var(--danger); font-weight:700;"></div>
+    </div>
+
+    <!-- BOTÕES ESTILIZADOS -->
+    <button type="submit" class="btn" style="margin-bottom:15px; padding:18px; border-radius: 50px; background: var(--primary-gradient); color: white; border: none; width: 100%; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+    </button>
+    
+    <a href="/deletar/{{ registro['id'] }}" onclick="return confirm('Tem certeza?')" style="display:flex; justify-content:center; align-items:center; color:var(--danger); font-weight:700; font-size:13px; text-decoration:none; padding:15px; background:rgba(239, 68, 68, 0.1); border-radius:50px; gap:8px;">
+        <i class="fas fa-trash"></i> EXCLUIR REGISTRO
+    </a>
+</form>
+
+{% block extra_js %}
+<script>
+    const inputs = document.querySelectorAll('.calc-input');
+    const totalInput = document.getElementById('ganhoTotal');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            let sum = 0; 
+            inputs.forEach(i => sum += parseFloat(i.value || 0)); 
+            if(sum > 0) totalInput.value = sum.toFixed(2);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
+
+
+

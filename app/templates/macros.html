@@ -1,0 +1,192 @@
+<!-- 1. HERO CARD -->
+{% macro card_hero(lucro, ganho, despesa, tipo, valor) %}
+<div class="glass-card fade-in hero-clickable" onclick="window.location.href='/lucro_real?tipo={{ tipo }}&valor={{ valor }}'" style="animation-delay: 0.1s; padding-bottom: 20px; cursor: pointer; position: relative; overflow: hidden;">
+    
+    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary);"></div>
+
+    <div class="hero-val-container">
+        <div class="hero-label">Lucro Operacional</div>
+        <div class="hero-value">
+            <span class="hero-currency">R$</span>{{ "%.2f"|format(lucro) }}
+        </div>
+        
+        <div class="hero-hint">
+            {% if current_user.plan_type == 'basic' %}
+                <i class="fas fa-lock" style="font-size: 10px;"></i> Ver Lucro Real (Descontos)
+            {% else %}
+                Ver Análise de Lucro Real <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-footer-sutil">
+        <div class="hf-item">
+            <span class="hf-lbl">Faturamento</span>
+            <span class="hf-val val-green">R$ {{ "%.0f"|format(ganho) }}</span>
+        </div>
+        <div class="hf-item">
+            <span class="hf-lbl">Despesas</span>
+            <span class="hf-val val-red">R$ {{ "%.0f"|format(despesa) }}</span>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- 2. TIMER -->
+{% macro card_timer_glass() %}
+<div class="timer-glass fade-in" style="animation-delay: 0.15s;">
+    <div class="tm-left">
+        <div class="tm-icon"><i class="fas fa-stopwatch"></i></div>
+        <div>
+            <div class="tm-label">Tempo em Rota</div>
+            <div id="displayTimer" class="tm-display">00:00:00</div>
+        </div>
+    </div>
+    <div style="display:flex; align-items:center;">
+        <button id="btnMain" class="btn-tm-play" onclick="toggleTimer()"><i class="fas fa-play"></i></button>
+        <button id="btnStop" class="btn-tm-stop" onclick="stopTimer()" style="display:none;"><i class="fas fa-stop"></i></button>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- 3. WIDGETS -->
+{% macro card_tri_widgets(km, horas, corridas) %}
+<div class="widget-grid fade-in" style="animation-delay: 0.2s;">
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-clock"></i></div>
+        <span class="wc-val">{{ horas|float_to_time }}h</span>
+        <span class="wc-lbl">Horas</span>
+    </div>
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-car"></i></div>
+        <span class="wc-val">{{ corridas }}</span>
+        <span class="wc-lbl">Corridas</span>
+    </div>
+    <div class="widget-card">
+        <div class="wc-icon"><i class="fas fa-road"></i></div>
+        <span class="wc-val">{{ "%.0f"|format(km) }}</span>
+        <span class="wc-lbl">KM</span>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- 4. META (SMART GOAL V2) -->
+{% macro card_meta_full(acumulado, meta, smart) %}
+<div class="glass-card fade-in" id="cardMeta" style="animation-delay: 0.25s;">
+    <div class="card-title" onclick="toggleMeta()" style="cursor:pointer;">
+        <span>Meta Semanal <i class="fas fa-pen" style="font-size:10px; opacity:0.5;"></i></span>
+        <span style="color:var(--primary);">{{ "%.0f"|format(acumulado/meta*100) if meta > 0 else 0 }}%</span>
+    </div>
+    <div id="metaEdit" style="display:none; margin-bottom:10px;">
+        <form action="/atualizar_meta" method="POST" style="display:flex; gap:10px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+            <input type="number" step="0.01" name="nova_meta" value="{{ meta }}" placeholder="Nova meta">
+            <button type="submit" class="btn-tm-play" style="width:auto; padding:0 15px; border-radius:10px;"><i class="fas fa-check"></i></button>
+        </form>
+    </div>
+    <div style="height:10px; background:rgba(0,0,0,0.05); border-radius:10px; overflow:hidden; margin-bottom:8px;">
+        <div style="height:100%; background:var(--primary-gradient); width: {{ (acumulado / meta * 100) if meta > 0 and acumulado < meta else 100 }}%"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--text-main);">
+        <span>R$ {{ "%.0f"|format(acumulado) }}</span>
+        <span style="opacity:0.6;">Alvo: R$ {{ "%.0f"|format(meta) }}</span>
+    </div>
+    
+    <!-- LÓGICA INTELIGENTE v2 -->
+    {% if smart %}
+        <div style="margin-top:15px; font-size:11px; color:var(--text-secondary); background:rgba(255,255,255,0.5); padding:10px; border-radius:12px; display:flex; align-items:center; gap:8px; line-height: 1.4;">
+            {% if smart.status == 'concluido' or smart.status == 'superavit' %}
+                <i class="fas fa-check-circle" style="color:var(--success); font-size: 14px;"></i>
+            {% elif smart.status == 'sem_meta' %}
+                <i class="fas fa-info-circle" style="color:var(--warning); font-size: 14px;"></i>
+            {% else %}
+                <i class="fas fa-bullseye" style="color:var(--primary); font-size: 14px;"></i>
+            {% endif %}
+
+            {% if current_user.plan_type == 'basic' %}
+                <span style="opacity:0.8;">Feedback Diário Inteligente: <b style="color:var(--text-main);">Premium</b></span>
+                <i class="fas fa-lock" style="font-size:10px; margin-left:auto; color:var(--primary);"></i>
+            {% else %}
+                <span>{{ smart.msg }}</span>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+<!-- 5. PERFORMANCE -->
+{% macro card_performance_avg(m) %}
+<div class="glass-card fade-in" style="animation-delay: 0.3s;">
+    <div class="card-title"><span>Performance Média</span></div>
+    <table class="perf-table">
+        <thead><tr><th>Métrica</th><th>Faturamento</th><th>Lucro</th></tr></thead>
+        <tbody>
+            <tr><td>Por Dia</td><td>R$ {{ "%.2f"|format(m.ganho_dia) }}</td><td class="val-profit">R$ {{ "%.2f"|format(m.lucro_dia) }}</td></tr>
+            <tr><td>Por KM</td><td>R$ {{ "%.2f"|format(m.ganho_km) }}</td><td class="val-profit">R$ {{ "%.2f"|format(m.lucro_km) }}</td></tr>
+            <tr><td>Por Hora</td><td>R$ {{ "%.2f"|format(m.ganho_h) }}</td><td class="val-profit">R$ {{ "%.2f"|format(m.lucro_h) }}</td></tr>
+            <tr><td>Por Corrida</td><td>R$ {{ "%.2f"|format(m.ganho_corr) }}</td><td class="val-profit">R$ {{ "%.2f"|format(m.lucro_corr) }}</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
+<!-- 6. GRÁFICO DESPESAS -->
+{% macro card_despesas_chart(dados_rosca) %}
+{% if dados_rosca and (dados_rosca[0] > 0 or dados_rosca[1] > 0 or dados_rosca[2] > 0) %}
+<div class="glass-card fade-in" style="animation-delay: 0.35s;">
+    <div class="card-title"><span>Gastos do Período</span></div>
+    
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div class="chart-container" style="height: 110px; width: 110px; margin: 0;">
+            <canvas id="chartDespesas"></canvas>
+        </div>
+        
+        <div style="flex: 1; padding-left: 20px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:8px; align-items: center;">
+                <span><i class="fas fa-circle" style="font-size:8px; color:#F59E0B; margin-right:5px;"></i> Combustível</span>
+                <b>R$ {{ "%.0f"|format(dados_rosca[0]) }}</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:8px; align-items: center;">
+                <span><i class="fas fa-circle" style="font-size:8px; color:#EF4444; margin-right:5px;"></i> Alimentação</span>
+                <b>R$ {{ "%.0f"|format(dados_rosca[1]) }}</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; align-items: center;">
+                <span><i class="fas fa-circle" style="font-size:8px; color:#64748B; margin-right:5px;"></i> Manutenção</span>
+                <b>R$ {{ "%.0f"|format(dados_rosca[2]) }}</b>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+<!-- 7. MANUTENÇÃO DASHBOARD -->
+{% macro card_manutencao_glass(lista) %}
+<div class="glass-card fade-in" style="animation-delay: 0.4s;">
+    <div class="card-title"><span>Manutenção</span><a href="/manutencao" style="font-size:11px; color:var(--primary); text-decoration:none; font-weight:700;">VER TUDO</a></div>
+    {% if lista %}
+        {% for item in lista %}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:35px; height:35px; border-radius:10px; background:{{ 'rgba(239,68,68,0.1)' if item.urgencia == 'critica' else 'rgba(245,158,11,0.1)' }}; color:{{ 'var(--danger)' if item.urgencia == 'critica' else 'var(--warning)' }}; display:flex; align-items:center; justify-content:center; font-size:14px;"><i class="fas fa-wrench"></i></div>
+                <div>
+                    <div style="font-weight:700; font-size:13px; color:var(--text-main);">{{ item.item }}</div>
+                    <div style="font-size:11px; color:var(--text-secondary);">
+                        {% if current_user.plan_type == 'basic' %}
+                            <span style="filter: blur(2px);">25/10</span> <i class="fas fa-lock" style="font-size:8px;"></i>
+                        {% else %}
+                            {{ item.previsao_txt }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:right;"><span style="font-size:10px; color:var(--text-secondary); display:block;">Faltam</span><span style="font-weight:800; font-size:13px; color:var(--text-main);">{{ "%.0f"|format(item.falta_km) }} km</span></div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align:center; padding:15px; color:var(--text-secondary); font-size:13px;"><i class="fas fa-check-circle" style="color:var(--success); font-size:24px; margin-bottom:5px;"></i><p style="margin:0;">Tudo em dia!</p></div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+

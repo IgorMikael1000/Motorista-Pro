@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Notificações</h2>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 120px; animation-delay: 0.1s;">
+
+    {% if notifications %}
+        <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+            <a href="/mark_all_read" style="font-size:11px; font-weight:700; color:var(--primary); text-decoration:none;">Marcar todas como lidas</a>
+        </div>
+
+        {% for n in notifications %}
+        <div class="glass-card" style="padding:15px; border-left:4px solid {{ 'var(--primary)' if not n.is_read else 'transparent' }}; opacity: {{ '1' if not n.is_read else '0.7' }};">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">
+                    {{ n.created_at.strftime('%d/%m às %H:%M') }}
+                </span>
+                {% if not n.is_read %}
+                <span style="background:var(--primary); color:white; font-size:9px; padding:2px 6px; border-radius:10px; font-weight:700;">NOVA</span>
+                {% endif %}
+            </div>
+            
+            <p style="margin:0; font-size:13px; line-height:1.4; color:var(--text-main);">
+                {{ n.message }}
+            </p>
+            
+            {% if not n.is_read %}
+            <div style="text-align:right; margin-top:10px;">
+                <a href="/mark_notification/{{ n.id }}" style="font-size:11px; color:var(--primary); font-weight:700; text-decoration:none;">
+                    <i class="fas fa-check"></i> Ler
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div style="text-align:center; margin-top:30px;">
+            <a href="/clear_notifications" onclick="return confirm('Apagar tudo?')" style="color:var(--danger); font-size:12px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px; padding:10px 20px; background:rgba(239, 68, 68, 0.05); border-radius:20px;">
+                <i class="fas fa-trash"></i> Limpar Histórico
+            </a>
+        </div>
+
+    {% else %}
+        <div style="text-align:center; padding:100px 0; color:var(--text-secondary); opacity:0.6;">
+            <i class="far fa-bell-slash" style="font-size:40px; margin-bottom:15px;"></i>
+            <p>Nenhuma notificação.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+

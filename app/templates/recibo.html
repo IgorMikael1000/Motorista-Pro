@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Recibo - Motorista Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <style>
+        :root { --bg-body: #F0F4F8; --primary: #2563EB; --text-main: #0F172A; --text-secondary: #64748B; --glass-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; justify-content: center; }
+        
+        /* CARD PRINCIPAL */
+        .receipt-card { 
+            background: white; width: 100%; max-width: 340px; padding: 30px 25px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); position: relative; 
+            border-radius: 20px; margin-bottom: 30px; 
+            /* Fundo decorativo sutil nas bordas */
+            background-image: radial-gradient(circle at top left, transparent 15px, white 15px), radial-gradient(circle at top right, transparent 15px, white 15px); 
+            background-size: 51% 100%; background-repeat: no-repeat; background-position: left top, right top; 
+            padding-top: 40px; overflow: hidden; /* Garante que a marca d'água não saia */
+        }
+
+        /* --- MARCA D'ÁGUA --- */
+        .watermark {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            opacity: 0.05; /* Bem sutil para não atrapalhar leitura */
+            z-index: 0;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .wm-logo { width: 180px; height: 180px; margin-bottom: 10px; filter: grayscale(100%); }
+        .wm-text { font-size: 26px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; }
+
+        /* CONTEÚDO (Z-INDEX PARA FICAR ACIMA DA MARCA) */
+        .receipt-header, .receipt-row, .divider, .footer-msg { position: relative; z-index: 10; }
+
+        .receipt-header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #eee; padding-bottom: 20px; }
+        .receipt-logo { font-size: 30px; color: var(--primary); margin-bottom: 10px; }
+        .receipt-title { font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; }
+        .receipt-val { font-size: 48px; font-weight: 800; color: var(--text-main); margin: 10px 0; letter-spacing: -2px; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; }
+        .receipt-label { color: var(--text-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+        .receipt-data { font-weight: 700; color: var(--text-main); text-align: right; }
+        .divider { border-top: 2px dashed #eee; margin: 20px 0; }
+        .footer-msg { text-align: center; margin-top: 30px; font-size: 10px; color: #ccc; font-weight: 500; }
+        
+        .btn-share { background: #10B981; color: white; padding: 18px 40px; border-radius: 50px; text-decoration: none; font-weight: 800; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); display: flex; align-items: center; gap: 10px; cursor: pointer; border: none; font-size: 16px; transition: transform 0.2s; }
+        .btn-share:active { transform: scale(0.95); }
+        .btn-locked { background: #64748B; color: white; padding: 18px 40px; border-radius: 50px; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; cursor: pointer; border: none; font-size: 16px; }
+        .btn-back { position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; color: var(--text-main); text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:200; justify-content:center; align-items:center; flex-direction:column; }
+        #upsellModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        .upsell-card { width:90%; max-width:350px; text-align:center; padding:30px; background: white; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: popUp 0.3s; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: #aaa; cursor: pointer; }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <a href="/agenda" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+
+    <div id="loadingOverlay">
+        <div style="font-size:30px; margin-bottom:10px; color:var(--primary);"><i class="fas fa-spinner fa-spin"></i></div>
+        <div style="font-weight:800; color:var(--text-main);">Gerando Imagem...</div>
+    </div>
+    
+    <div id="upsellModal">
+        <div class="upsell-card">
+            <button class="close-modal" onclick="closeUpsell()">&times;</button>
+            <div style="width:70px; height:70px; background:rgba(37,99,235,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; color:var(--primary); font-size:30px;"><i class="fas fa-crown"></i></div>
+            <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size:20px; font-weight:800;">Envie Recibos Profissionais</h3>
+            <p style="font-size:14px; color:var(--text-secondary); margin-bottom:25px; line-height:1.5;">O recibo foi gerado, mas o envio profissional é exclusivo do plano Premium. Passe confiança aos seus passageiros!</p>
+            <a href="/assinar" class="btn-share" style="background:var(--primary); box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); justify-content:center;">Quero ser Profissional</a>
+        </div>
+    </div>
+    
+    <div class="receipt-card" id="receiptArea">
+        <!-- MARCA D'ÁGUA -->
+        <div class="watermark">
+            <img src="/static/icons/icon-512.png" alt="Logo" class="wm-logo">
+            <div class="wm-text">MOTORISTA PRO</div>
+        </div>
+
+        <div class="receipt-header">
+            <div class="receipt-logo"><i class="fas fa-check-circle"></i></div>
+            <div class="receipt-title">Comprovante de Pagamento</div>
+            <div class="receipt-val">R$ {{ data.valor }}</div>
+            <div style="font-size:11px; background:#F0FDF4; color:#15803D; padding:4px 10px; border-radius:20px; display:inline-block; font-weight:700;">PAGAMENTO CONFIRMADO</div>
+        </div>
+        <div class="receipt-row"><span class="receipt-label">Passageiro</span><span class="receipt-data">{{ data.cliente }}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Motorista</span><span class="receipt-data">{{ data.motorista }}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Data</span><span class="receipt-data">{{ data.data }}</span></div>
+        {% if data.origem %}
+        <div class="divider"></div>
+        <div class="receipt-row" style="align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><span class="receipt-label">Origem</span><span style="font-weight:700; font-size:12px;">{{ data.origem }}</span></div>
+            <i class="fas fa-arrow-right" style="color:#ccc; font-size:10px;"></i>
+            <div style="display:flex; flex-direction:column; gap:2px; text-align:right;"><span class="receipt-label">Destino</span><span style="font-weight:700; font-size:12px;">{{ data.destino }}</span></div>
+        </div>
+        {% endif %}
+        <div class="footer-msg">Emitido via Motorista Pro App</div>
+    </div>
+
+    {% if current_user.plan_type == 'basic' %}
+        <button onclick="openUpsell()" class="btn-locked"><i class="fas fa-lock"></i> Partilhar Imagem</button>
+    {% else %}
+        <button onclick="shareImage()" class="btn-share"><i class="fas fa-share-alt"></i> Partilhar Imagem</button>
+    {% endif %}
+    
+    <script>
+        function openUpsell() { document.getElementById('upsellModal').style.display = 'flex'; }
+        function closeUpsell() { document.getElementById('upsellModal').style.display = 'none'; }
+        function shareImage() {
+            const element = document.getElementById('receiptArea');
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+            html2canvas(element, { scale: 3, useCORS: true, backgroundColor: null }).then(canvas => {
+                canvas.toBlob(async blob => {
+                    overlay.style.display = 'none';
+                    if (navigator.share) {
+                        const file = new File([blob], "recibo_corrida.png", { type: "image/png" });
+                        try { await navigator.share({ files: [file], title: 'Recibo de Corrida', text: 'Aqui está o comprovante da sua viagem.' }); } catch (err) { console.log(err); }
+                    } else {
+                        const link = document.createElement('a'); link.download = 'recibo.png'; link.href = canvas.toDataURL(); link.click();
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+
+

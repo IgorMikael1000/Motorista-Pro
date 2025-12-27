@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block extra_css %}
+<style>
+    /* Estilo para bloqueio de conteúdo Premium */
+    .premium-blur {
+        filter: blur(4px);
+        user-select: none;
+        pointer-events: none;
+        opacity: 0.7;
+        transition: 0.3s;
+    }
+    
+    .blur-container { position: relative; overflow: hidden; border-radius: 20px; }
+
+    .lock-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.05); z-index: 10;
+        backdrop-filter: blur(1px);
+    }
+    
+    .btn-unlock {
+        background: var(--primary); color: white; border: none; padding: 12px 24px;
+        border-radius: 50px; font-weight: 800; font-size: 12px; text-decoration: none;
+        box-shadow: 0 10px 25px rgba(37,99,235,0.4); display: flex; align-items: center; gap: 8px;
+        transition: transform 0.2s; border: 2px solid white; cursor: pointer;
+    }
+    .btn-unlock:active { transform: scale(0.95); }
+
+    /* Toggle Switch Personalizado */
+    .toggle-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(0,0,0,0.03); padding: 10px 15px; border-radius: 12px; }
+    .switch-link { text-decoration: none; display: inline-block; position: relative; width: 44px; height: 24px; }
+    .switch-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 34px; transition: .4s; }
+    .switch-circle { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .active .switch-bg { background-color: var(--primary); }
+    .active .switch-circle { transform: translateX(20px); }
+    
+    /* Novo Indicador de Período */
+    .period-badge { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 3px 8px; border-radius: 8px; font-weight: 800; text-transform: uppercase; margin-left: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Lucro Real</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Análise Profunda</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom:120px; animation-delay: 0.1s;">
+    
+    <!-- CARD VEÍCULO -->
+    <div class="card" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color:white; border:none; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3); padding:25px;">
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+                <div style="font-size:10px; opacity:0.8; letter-spacing:1px; text-transform:uppercase; font-weight:700;">Veículo Atual</div>
+                <div style="font-size:20px; font-weight:800; margin-top:2px;">{{ c['veiculo_modelo'] or 'Não configurado' }}</div>
+                <div style="font-size:12px; opacity:0.9;">{{ c['veiculo_marca'] }} • {{ c['veiculo_ano'] }}</div>
+            </div>
+            <a href="/setup_veiculo" style="background:rgba(255,255,255,0.2); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; text-decoration:none; backdrop-filter: blur(5px);">
+                <i class="fas fa-pen"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- TOGGLE CUSTOS FIXOS -->
+    {% if current_user.plan_type == 'premium' %}
+    <div class="toggle-container">
+        <span style="font-size:12px; font-weight:700; color:var(--text-main);">Deduzir Custo Fixo (IPVA/Seguro)</span>
+        <a href="/lucro_real?tipo={{ tipo }}&valor={{ valor }}&usar_custos_fixos={{ 'false' if usar_custos_fixos else 'true' }}" class="switch-link {{ 'active' if usar_custos_fixos else '' }}">
+            <div class="switch-bg"></div>
+            <div class="switch-circle"></div>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- BALANÇO -->
+    <div class="glass-card">
+        <div class="card-title">
+            <span>Balanço do Período</span>
+            <span class="period-badge">{{ periodo_label }}</span>
+        </div>
+        
+        <!-- AVISO DE SINCRONIZAÇÃO -->
+        <div style="font-size:10px; color:var(--text-secondary); text-align:center; margin-bottom:15px; background:rgba(0,0,0,0.03); padding:8px; border-radius:10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fas fa-link"></i> Visualizando dados conforme filtro da Tela Inicial.
+        </div>
+        
+        <!-- Lucro Operacional (Sempre Visível) -->
+        <div style="background:rgba(16, 185, 129, 0.1); padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid rgba(16, 185, 129, 0.2);">
+            <div style="font-size:11px; color:var(--text-main); font-weight:700; text-transform:uppercase;">Lucro Operacional</div>
+            <div style="font-size:24px; font-weight:800; color:var(--success);">+ R$ {{ "%.2f"|format(lucro_operacional) }}</div>
+            <div style="font-size:10px; color:var(--text-secondary);">(Faturamento - Despesas do dia)</div>
+        </div>
+        
+        <!-- BLOQUEIO BASIC -->
+        {% if current_user.plan_type == 'basic' %}
+        <div class="blur-container">
+            <div class="premium-blur">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding:0 5px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--text-main);">Reserva Técnica</span>
+                    <span style="font-size:14px; font-weight:800; color:var(--danger);">- R$ 150,00</span>
+                </div>
+
+                <div style="background:var(--success); color:white; padding:25px 20px; border-radius:20px; text-align:center; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
+                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:0.9; font-weight:700;">Lucro Líquido Real</div>
+                    <div style="font-size:40px; font-weight:800; margin:5px 0; letter-spacing:-1.5px;">R$ 800,00</div>
+                    <div style="font-size:11px; opacity:0.9;">O que sobra de verdade no bolso</div>
+                </div>
+            </div>
+            
+            <div class="lock-overlay">
+                <a href="/assinar" class="btn-unlock"><i class="fas fa-lock"></i> Ver Lucro Real</a>
+            </div>
+        </div>
+        {% else %}
+        <!-- VISUAL PREMIUM (LIBERADO) -->
+        <div>
+            <!-- Reserva Técnica -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 5px;">
+                <span style="font-size:13px; font-weight:600; color:var(--text-main);">Reserva Técnica</span>
+                <span style="font-size:14px; font-weight:800; color:var(--danger);">- R$ {{ "%.2f"|format(total_reserva) }}</span>
+            </div>
+
+            <!-- Reserva Operacional (Custo Fixo) -->
+            {% if usar_custos_fixos %}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding:0 5px;">
+                <span style="font-size:13px; font-weight:600; color:var(--text-main);">Reserva Operacional <small style="font-weight:400; color:var(--text-secondary);">(Custo Fixo)</small></span>
+                <span style="font-size:14px; font-weight:800; color:var(--danger);">- R$ {{ "%.2f"|format(total_custo_fixo) }}</span>
+            </div>
+            {% endif %}
+
+            <div style="background:var(--success); color:white; padding:25px 20px; border-radius:20px; text-align:center; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; opacity:0.9; font-weight:700;">Lucro Líquido Real</div>
+                <div style="font-size:40px; font-weight:800; margin:5px 0; letter-spacing:-1.5px;">R$ {{ "%.2f"|format(lucro_real) }}</div>
+                <div style="font-size:11px; opacity:0.9;">O que sobra de verdade no bolso</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- DETALHES TÉCNICOS -->
+    <div class="glass-card">
+        <div class="card-title"><span>Custo Invisível</span></div>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px; line-height:1.5;">
+            Baseado nos <b>{{ "%.0f"|format(km_total) }} KM</b> rodados neste período, este é o custo estimado de desgaste.
+        </p>
+        
+        {% if current_user.plan_type == 'basic' %}
+        <div class="blur-container">
+            <div class="premium-blur">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; border-bottom:1px dashed rgba(0,0,0,0.05); padding-bottom:12px;">
+                    <span style="color:var(--text-secondary);">Custo Reserva (Dep+Manu)</span>
+                    <b style="color:var(--text-main);">R$ 0,35/km</b>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span style="color:var(--text-secondary);">Custo Total Rodagem</span>
+                    <b style="color:var(--danger);">R$ 0,80/km</b>
+                </div>
+            </div>
+            <div class="lock-overlay">
+                <a href="/assinar" class="btn-unlock" style="background:#F59E0B; border-color:#F59E0B;"><i class="fas fa-lock"></i> Ver Custo por KM</a>
+            </div>
+        </div>
+        {% else %}
+        <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; border-bottom:1px dashed rgba(0,0,0,0.05); padding-bottom:12px;">
+                <span style="color:var(--text-secondary);">Custo Reserva (Dep+Manu)</span>
+                <b style="color:var(--text-main);">R$ {{ "%.2f"|format(d['custo_km_reserva']) }}/km</b>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <span style="color:var(--text-secondary);">Custo Total Rodagem</span>
+                <b style="color:var(--danger);">R$ {{ "%.2f"|format(d['custo_total_rodagem']) }}/km</b>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

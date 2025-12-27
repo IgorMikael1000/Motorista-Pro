@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura Vencida - Motorista Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #F4F7FE; padding: 20px; text-align: center; color: #2B3674; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: white; padding: 40px 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(112, 144, 176, 0.15); max-width: 400px; width: 100%; }
+        h2 { margin: 15px 0 10px 0; color: #EE5D50; font-weight: 800; }
+        p { color: #707EAE; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+        .price { color: #4318FF; font-size: 36px; font-weight: 800; margin: 20px 0 5px 0; }
+        .pix-box { background: #F9F9FC; padding: 15px; border-radius: 15px; font-family: monospace; font-weight: bold; border: 1px dashed #A3AED0; word-break: break-all; margin-bottom: 20px; color: #2B3674; }
+        .btn { background: #05CD99; color: white; padding: 18px; border-radius: 18px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; box-shadow: 0 10px 20px -5px rgba(5, 205, 153, 0.4); transition: transform 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .logout { margin-top: 20px; display: inline-block; color: #A3AED0; text-decoration: none; font-size: 13px; }
+        .impact-text { color: #05CD99; font-weight: bold; font-size: 14px; margin-bottom: 20px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="background: rgba(238, 93, 80, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <i class="fas fa-lock" style="font-size: 35px; color: #EE5D50;"></i>
+        </div>
+        
+        <h2>Acesso Bloqueado</h2>
+        <p>Olá <b>{{ nome }}</b>, seus 7 dias de teste gratuito acabaram em <b>{{ validade }}</b>.</p>
+        <p>Não perca o controle do seu lucro real! Continue gerenciando suas finanças.</p>
+        
+        <div class="price">R$ 19,90 <small style="font-size:14px; color:#A3AED0; font-weight:600;">/mês</small></div>
+        <span class="impact-text">Isso é apenas R$ 0,66 por dia! ☕</span>
+        
+        <p style="font-size: 12px; margin-bottom: 5px; font-weight: 600;">Minha Chave PIX:</p>
+        
+        <div class="pix-box">
+            appmotoristapro@gmail.com
+        </div>
+        
+        <a href="https://wa.me/5511991167709?text=Ola,%20paguei%20o%20MotoristaPRO.%20Meu%20email%20de%20cadastro%20eh:%20{{ current_user.email }}" class="btn" target="_blank">
+            <i class="fab fa-whatsapp" style="font-size: 20px;"></i> Enviar Comprovante
+        </a>
+        
+        <a href="/logout" class="logout"><i class="fas fa-sign-out-alt"></i> Sair da conta</a>
+    </div>
+</body>
+</html>
+
+

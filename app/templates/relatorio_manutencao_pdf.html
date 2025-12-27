@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Livro de Revisões - Motorista Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; color: #0F172A; max-width: 800px; margin: 0 auto; position: relative; }
+        @page { size: A4; margin: 2cm; }
+        @media print { 
+            body { padding: 0; -webkit-print-color-adjust: exact; } 
+            .no-print { display: none; } 
+        }
+
+        /* --- MARCA D'ÁGUA --- */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.06;
+            z-index: -1;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+        .wm-logo { width: 250px; height: 250px; margin-bottom: 20px; filter: grayscale(100%); }
+        .wm-text { font-size: 60px; font-weight: 800; color: #000; text-transform: uppercase; letter-spacing: 5px; margin: 0; }
+
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #E2E8F0; padding-bottom: 20px; position: relative; z-index: 10; }
+        .logo { font-size: 24px; font-weight: 800; color: #2563EB; margin-bottom: 5px; }
+        .meta { font-size: 12px; color: #64748B; }
+
+        .vehicle-info { background: rgba(248, 250, 252, 0.9); padding: 20px; border-radius: 10px; border: 1px solid #E2E8F0; margin-bottom: 30px; text-align: center; position: relative; z-index: 10; }
+        .v-title { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748B; display: block; margin-bottom: 5px; }
+        .v-car { font-size: 18px; font-weight: 800; }
+
+        .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #64748B; margin: 30px 0 15px 0; border-bottom: 1px solid #E2E8F0; padding-bottom: 5px; }
+
+        .table-clean { width: 100%; border-collapse: collapse; font-size: 12px; position: relative; z-index: 10; }
+        .table-clean th { padding: 10px 5px; border-bottom: 2px solid #CBD5E1; color: #64748B; text-align: left; }
+        .table-clean td { padding: 12px 5px; border-bottom: 1px dashed #E2E8F0; }
+        
+        .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 20px; position: relative; z-index: 10; }
+        
+        .btn-print { 
+            position: fixed; top: 20px; right: 20px; 
+            background: #2563EB; color: white; border: none; 
+            padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="window.print()" class="no-print btn-print">🖨️ Imprimir / Salvar PDF</button>
+
+    <!-- MARCA D'ÁGUA -->
+    <div class="watermark">
+        <img src="/static/icons/icon-512.png" alt="Logo" class="wm-logo">
+        <h1 class="wm-text">MOTORISTA PRO</h1>
+    </div>
+
+    <div class="header">
+        <div class="logo">Motorista Pro</div>
+        <div class="meta">Livro Digital de Manutenção</div>
+        <div class="meta">Gerado em: {{ hoje }}</div>
+        <div class="meta">Proprietário: {{ nome }}</div>
+    </div>
+
+    <div class="vehicle-info">
+        <span class="v-title">Veículo Registrado</span>
+        <div class="v-car">{{ veiculo.marca }} {{ veiculo.modelo }} ({{ veiculo.ano }})</div>
+    </div>
+
+    <div class="section-title">Histórico de Serviços</div>
+    
+    {% if logs %}
+    <table class="table-clean">
+        <thead>
+            <tr>
+                <th width="25%">Data</th>
+                <th width="40%">Item / Serviço</th>
+                <th width="20%">KM no Ato</th>
+                <th width="15%">Custo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.service_date.strftime('%d/%m/%Y') }}</td>
+                <td><b>{{ log.item_name }}</b></td>
+                <td>{{ "%.0f"|format(log.service_km) }} km</td>
+                <td>R$ {{ "%.2f"|format(log.cost or 0) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="text-align:center; color:#94A3B8; margin-top:30px;">Nenhum registro de manutenção encontrado.</p>
+    {% endif %}
+
+    <div class="footer">
+        Documento gerado automaticamente pela plataforma Motorista Pro.<br>
+        motoristapro.app
+    </div>
+
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>
+
+
+

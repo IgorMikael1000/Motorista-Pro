@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/configuracoes" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Meu Plano</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Status da Conta</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 120px; animation-delay: 0.1s;">
+
+    <!-- CARD STATUS -->
+    <div class="glass-card" style="text-align:center; padding:35px 20px;">
+        <div style="width:80px; height:80px; background:{{ 'rgba(16, 185, 129, 0.1)' if dias > 0 else 'rgba(239, 68, 68, 0.1)' }}; color:{{ 'var(--success)' if dias > 0 else 'var(--danger)' }}; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:35px; margin-bottom:20px; box-shadow:var(--glass-shadow);">
+            <i class="fas {{ 'fa-check-circle' if dias > 0 else 'fa-times-circle' }}"></i>
+        </div>
+        
+        <h3 style="margin:0 0 8px 0; color:var(--text-main); font-size:24px; font-weight:800;">
+            {{ 'Premium Ativo' if dias > 0 else 'Plano Expirado' }}
+        </h3>
+        
+        <p style="margin:0; font-size:14px; color:var(--text-secondary); line-height:1.5; max-width:250px; margin:0 auto;">
+            {% if dias > 0 %}
+                Você é um motorista de elite.
+            {% else %}
+                Renove para recuperar o controle.
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- LISTA DE BENEFÍCIOS (STATUS) -->
+    <div class="glass-card">
+        <div class="card-title"><span>Recursos do Plano</span></div>
+        
+        <!-- MONITORAMENTO DINÂMICO (DESTAQUE) -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px dashed rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:30px; height:30px; background:rgba(37,99,235,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--primary);"><i class="fas fa-robot"></i></div>
+                <span style="font-size:13px; font-weight:700; color:var(--text-main);">Monitoramento Dinâmico</span>
+            </div>
+            {% if current_user.plan_type == 'premium' and dias > 0 %}
+                <span style="font-size:10px; font-weight:800; color:#10B981; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:6px;">ATIVO</span>
+            {% else %}
+                <span style="font-size:10px; font-weight:800; color:#F59E0B; background:rgba(245,158,11,0.1); padding:4px 8px; border-radius:6px;"><i class="fas fa-lock"></i> PREMIUM</span>
+            {% endif %}
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px dashed rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:30px; height:30px; background:rgba(37,99,235,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--primary);"><i class="fas fa-chart-line"></i></div>
+                <span style="font-size:13px; font-weight:600; color:var(--text-main);">Lucro Real (+ Custos)</span>
+            </div>
+            {% if current_user.plan_type == 'premium' and dias > 0 %}
+                <i class="fas fa-check" style="color:#10B981; font-size:12px;"></i>
+            {% else %}
+                <i class="fas fa-lock" style="color:#ccc; font-size:12px;"></i>
+            {% endif %}
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:30px; height:30px; background:rgba(37,99,235,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--primary);"><i class="fas fa-file-pdf"></i></div>
+                <span style="font-size:13px; font-weight:600; color:var(--text-main);">Recibos & Relatórios PDF</span>
+            </div>
+            {% if current_user.plan_type == 'premium' and dias > 0 %}
+                <i class="fas fa-check" style="color:#10B981; font-size:12px;"></i>
+            {% else %}
+                <i class="fas fa-lock" style="color:#ccc; font-size:12px;"></i>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title"><span>Detalhes</span></div>
+        <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:13px;">
+            <span style="color:var(--text-secondary);">Vencimento</span>
+            <span style="font-weight:700; color:var(--text-main);">{{ validade if validade else '--/--/----' }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:13px;">
+            <span style="color:var(--text-secondary);">Dias Restantes</span>
+            <span style="font-weight:700; color:{{ 'var(--success)' if dias > 5 else 'var(--danger)' }};">{{ dias }} dias</span>
+        </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:15px;">
+        <a href="{{ url_for('payments.assinar') }}" class="btn" style="border-radius: 50px; padding: 18px; font-size: 16px; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);">
+            <i class="fas fa-sync-alt"></i> Renovar Assinatura
+        </a>
+        
+        <button onclick="manageSubscription()" class="btn" style="background:var(--glass-bg); color:var(--text-main); border:1px solid rgba(0,0,0,0.05); box-shadow:var(--glass-shadow); border-radius: 50px;">
+            <i class="fas fa-credit-card"></i> Gerenciar Pagamento
+        </button>
+    </div>
+
+</div>
+
+<script>
+    function manageSubscription() {
+        const method = "{{ current_user.payment_method }}";
+        if (method === 'pix' || method === 'manual') {
+            alert("Assinaturas PIX não possuem renovação automática. Basta fazer um novo pagamento quando vencer.");
+        } else {
+            window.location.href = "{{ url_for('payments.gerenciar') }}";
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório Mensal</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #000; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 18px; }
+        h2 { margin: 5px 0; font-size: 14px; font-weight: normal; }
+        
+        .box-resumo { display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #000; padding: 10px; }
+        .box-item { text-align: center; }
+        .box-val { font-weight: bold; font-size: 14px; display: block; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #eee; }
+        .text-right { text-align: right; }
+        
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <button class="no-print" onclick="window.print()" style="padding:10px; font-size:16px; margin-bottom:20px;">🖨️ Imprimir / Salvar PDF</button>
+
+    <div class="header">
+        <h1>Relatório de Performance - Motorista de App</h1>
+        <h2>Referência: {{ nome_mes }}</h2>
+    </div>
+
+    <div class="box-resumo">
+        <div class="box-item"><span class="box-val">R$ {{ "%.2f"|format(t_ganho) }}</span>Receita Bruta</div>
+        <div class="box-item"><span class="box-val">R$ {{ "%.2f"|format(t_despesa) }}</span>Despesas Var.</div>
+        <div class="box-item"><span class="box-val">R$ {{ "%.2f"|format(t_fixo) }}</span>Custos Fixos</div>
+        <div class="box-item"><span class="box-val">R$ {{ "%.2f"|format(lucro_real) }}</span>LUCRO REAL</div>
+    </div>
+
+    <h3>Resumo Operacional</h3>
+    <p>KM Rodados: {{ "%.1f"|format(t_km) }} | Horas Trabalhadas: {{ "%.1f"|format(t_horas) }}</p>
+
+    <h3>Extrato Diário</h3>
+    <table>
+        <thead><tr><th>Data</th><th>Ganho</th><th>Gasto</th><th>KM</th><th>Obs</th></tr></thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td>{{ r['data'] }}</td>
+                <td class="text-right">R$ {{ "%.2f"|format(r['ganho_bruto']) }}</td>
+                <td class="text-right">R$ {{ "%.2f"|format(r['despesa_combustivel']+r['despesa_alimentacao']+r['despesa_manutencao']) }}</td>
+                <td class="text-right">{{ r['km_percorrido'] }}</td>
+                <td>{{ r['qtd_uber']+r['qtd_99']+r['qtd_part'] }} corridas</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top:30px; font-size:10px; text-align:center;">Gerado por Motorista Pro App</div>
+</body>
+</html>
+
+

@@ -1,0 +1,37 @@
+{% for r in registros %}
+<a href="/editar/{{ r['id'] }}" class="history-card fade-in">
+    <div class="h-date-group">
+        <span class="h-day">{{ r['data'][-2:] }}</span>
+        <span class="h-month">{{ r['data'][5:7] }}/{{ r['data'][2:4] }}</span>
+    </div>
+    <div class="h-info">
+        <div class="h-title">{{ r['qtd_uber'] + r['qtd_99'] + r['qtd_part'] }} Viagens</div>
+        <div class="h-badges">
+            <span><i class="fas fa-clock"></i> {{ r['horas_trabalhadas']|float_to_time }}h</span>
+            <span><i class="fas fa-road"></i> {{ "%.0f"|format(r['km_percorrido']) }}km</span>
+        </div>
+    </div>
+    <div class="h-values">
+        <div class="h-gain">+ R$ {{ "%.2f"|format(r['ganho_bruto']) }}</div>
+        <div class="h-expense">- R$ {{ "%.2f"|format(r['despesa_combustivel'] + r['despesa_alimentacao'] + r['despesa_manutencao']) }}</div>
+    </div>
+</a>
+{% endfor %}
+
+{% if has_next %}
+    <div id="load-more-container" class="text-center" style="margin-top: 20px; padding-bottom: 20px;">
+        <button hx-get="{{ url_for('main.historico', page=page+1, tipo=tipo, valor=valor) }}"
+                hx-target="#load-more-container" 
+                hx-swap="outerHTML"
+                class="btn-load-more">
+            Carregar Mais <i class="fas fa-chevron-down"></i>
+        </button>
+        
+        <!-- Indicador de Loading HTMX -->
+        <span class="htmx-indicator" style="font-size:12px; color:#64748B;">
+            <i class="fas fa-spinner fa-spin"></i> Buscando...
+        </span>
+    </div>
+{% endif %}
+
+

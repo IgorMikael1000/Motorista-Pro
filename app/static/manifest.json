@@ -1,0 +1,29 @@
+{
+  "name": "Motorista Pro",
+  "short_name": "MotoristaPro",
+  "description": "Gestão financeira inteligente para motoristas de aplicativo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F4F8",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["finance", "productivity", "utilities"],
+  "lang": "pt-BR"
+}
+
+

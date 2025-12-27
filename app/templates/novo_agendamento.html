@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/agenda" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Novo Agendamento</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Detalhes da Corrida</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<form method="post" class="container fade-in" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;" onsubmit="showLoading()">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- CLIENTE E VALOR -->
+    <div class="glass-card">
+        <div class="card-title"><span>Informações Básicas</span></div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">NOME DO PASSAGEIRO</label>
+            <input type="text" name="cliente" required placeholder="Ex: Ana Maria" style="font-weight: 600;">
+        </div>
+        
+        <div>
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">VALOR COMBINADO</label>
+            <div style="position: relative;">
+                <span style="position: absolute; left: 15px; top: 16px; color: var(--success); font-weight: 800;">R$</span>
+                <input type="number" step="0.01" name="valor" placeholder="0.00" inputmode="decimal" style="padding-left: 40px; font-weight: 700; color: var(--success);">
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA E HORA -->
+    <div class="glass-card">
+        <div class="card-title"><span>Quando?</span></div>
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px;">
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DATA</label>
+                <input type="date" name="data_ag" value="{{ hoje }}" required style="font-weight: 600;">
+            </div>
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">HORÁRIO</label>
+                <input type="time" name="hora_ag" required style="font-weight: 600; text-align: center;">
+            </div>
+        </div>
+    </div>
+
+    <!-- TRAJETO (COM PARADA) -->
+    <div class="glass-card">
+        <div class="card-title"><span>Trajeto</span></div>
+        
+        <div style="margin-bottom: 15px; position:relative;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">EMBARQUE (ORIGEM)</label>
+            <i class="fas fa-circle" style="position: absolute; left: 15px; top: 38px; font-size: 8px; color: var(--primary);"></i>
+            <input type="text" name="origem" required placeholder="Rua..." style="padding-left: 35px;">
+            
+            <!-- Linha conectora visual -->
+            <div style="position:absolute; left:18px; top:55px; height:35px; width:2px; background:rgba(0,0,0,0.1);"></div>
+        </div>
+        
+        <div style="margin-bottom: 15px; position:relative;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">PARADA (OPCIONAL)</label>
+            <i class="fas fa-stop-circle" style="position: absolute; left: 15px; top: 38px; font-size: 10px; color: var(--text-secondary);"></i>
+            <input type="text" name="parada" placeholder="Adicionar parada..." style="padding-left: 35px; border-style:dashed;">
+            
+            <div style="position:absolute; left:18px; top:55px; height:35px; width:2px; background:rgba(0,0,0,0.1);"></div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DESEMBARQUE (DESTINO)</label>
+            <div style="position: relative;">
+                <i class="fas fa-map-marker-alt" style="position: absolute; left: 15px; top: 18px; font-size: 12px; color: var(--danger);"></i>
+                <input type="text" name="destino" required placeholder="Av..." style="padding-left: 35px;">
+            </div>
+        </div>
+        
+        <div>
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">OBSERVAÇÕES (OPCIONAL)</label>
+            <textarea name="observacao" rows="2" placeholder="Ex: Levar cadeirinha..." style="resize: none;"></textarea>
+        </div>
+    </div>
+
+    <button type="submit" id="btnSalvar" class="btn" style="margin-bottom:20px; padding:18px; width:100%; border-radius: 50px; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);">
+        <i class="fas fa-check"></i> AGENDAR CORRIDA
+    </button>
+</form>
+
+<script>
+    function showLoading() {
+        const btn = document.getElementById('btnSalvar');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        btn.style.opacity = '0.8';
+    }
+</script>
+{% endblock %}
+
+
+

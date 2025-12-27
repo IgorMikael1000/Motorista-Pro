@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/configuracoes" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Segurança</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary);">Proteção da Conta</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding:15px; border-radius:15px; margin-bottom:20px; font-size:13px; font-weight:600; text-align:center; 
+                    background: {{ 'rgba(16, 185, 129, 0.15)' if category == 'success' else 'rgba(239, 68, 68, 0.15)' }};
+                    color: {{ 'var(--success)' if category == 'success' else 'var(--danger)' }};
+                    border: 1px solid {{ 'var(--success)' if category == 'success' else 'var(--danger)' }};">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ALTERAR E-MAIL -->
+    <div class="glass-card">
+        <div class="card-title"><span>E-mail de Acesso</span></div>
+        <form action="/update_email" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">E-MAIL ATUAL</label>
+                <input type="text" value="{{ current_user.email }}" disabled style="opacity:0.6; background:rgba(0,0,0,0.05);">
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">NOVO E-MAIL</label>
+                <input type="email" name="new_email" required placeholder="exemplo@email.com">
+            </div>
+            
+            <button type="submit" class="btn" style="padding:14px; font-size:13px; background:var(--glass-bg); color:var(--text-main); border:1px solid rgba(0,0,0,0.1); box-shadow:none;">Atualizar E-mail</button>
+        </form>
+    </div>
+
+    <!-- ALTERAR SENHA -->
+    <div class="glass-card">
+        <div class="card-title"><span>Alterar Senha</span></div>
+        <form action="/update_password" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">SENHA ATUAL</label>
+                <input type="password" name="current_password" required placeholder="Digite sua senha atual">
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">NOVA SENHA</label>
+                <input type="password" name="new_password" required minlength="6" placeholder="Mínimo 6 caracteres">
+            </div>
+            
+            <button type="submit" class="btn" style="padding:14px; font-size:13px;">Definir Nova Senha</button>
+        </form>
+    </div>
+    
+    <div style="text-align:center; margin-top:30px;">
+        <p style="font-size:11px; color:var(--text-secondary);">
+            <i class="fas fa-lock"></i> Seus dados estão protegidos por criptografia de ponta.
+        </p>
+    </div>
+
+</div>
+{% endblock %}
+
+

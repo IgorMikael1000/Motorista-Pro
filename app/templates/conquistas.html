@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    
+    .badge-card {
+        background: var(--glass-bg); border: var(--glass-border);
+        border-radius: 16px; padding: 15px 5px; text-align: center;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: 100px; transition: transform 0.2s; position: relative;
+    }
+    .badge-card:active { transform: scale(0.95); }
+    .badge-card.locked { opacity: 0.5; background: rgba(0,0,0,0.03); filter: grayscale(1); }
+    
+    .badge-icon { font-size: 32px; margin-bottom: 8px; }
+    .badge-name { font-size: 10px; font-weight: 700; line-height: 1.2; color: var(--text-main); height: 24px; display: flex; align-items: center; justify-content: center; }
+    
+    .mini-prog { width: 80%; height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+    .mini-fill { height: 100%; background: var(--success); }
+
+    #detailModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+    .detail-card { width:85%; max-width:300px; background:white; border-radius:25px; padding:30px; text-align:center; position:relative; animation: popIn 0.3s; }
+    @keyframes popIn { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Conquistas</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">
+            {{ total_unlocked }} / {{ total_all }} Desbloqueadas
+        </p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 50px; animation-delay: 0.1s;">
+
+    {% macro render_grid(lista, titulo) %}
+    {% if lista %}
+        <div style="font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin: 20px 0 10px 5px;">{{ titulo }}</div>
+        <div class="ach-grid">
+            {% for b in lista %}
+            <div class="badge-card {{ 'unlocked' if b.unlocked else 'locked' }}" 
+                 onclick="openDetail('{{ b.nome }}', '{{ b.descricao }}', '{{ b.icone }}', {{ 'true' if b.unlocked else 'false' }}, '{{ b.current }}', '{{ b.target }}')">
+                <div class="badge-icon">{{ b.icone }}</div>
+                <div class="badge-name">{{ b.nome }}</div>
+                {% if not b.unlocked and b.target > 1 %}
+                    <div class="mini-prog"><div class="mini-fill" style="width: {{ b.progress }}%"></div></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endmacro %}
+
+    {{ render_grid(categorias['iniciante'], 'Iniciante') }}
+    {{ render_grid(categorias['habito'], 'Hábitos') }}
+    {{ render_grid(categorias['financeiro'], 'Alta Performance') }}
+    {{ render_grid(categorias['ferramentas'], 'Explorador') }}
+    {{ render_grid(categorias['master'], 'Elite') }}
+
+</div>
+
+<div id="detailModal" onclick="this.style.display='none'">
+    <div class="detail-card" onclick="event.stopPropagation()">
+        <div id="dtIcon" style="font-size:60px; margin-bottom:15px;"></div>
+        <h3 id="dtName" style="margin:0 0 10px 0; color:var(--text-main); font-size:18px;"></h3>
+        <p id="dtDesc" style="color:var(--text-secondary); font-size:13px; margin-bottom:20px; line-height:1.5;"></p>
+        
+        <div id="dtProgress" style="display:none; background:var(--bg-body); padding:15px; border-radius:15px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; margin-bottom:5px;"><span>Progresso</span><span id="dtProgText"></span></div>
+            <div style="height:8px; background:#ddd; border-radius:4px; overflow:hidden;"><div id="dtBar" style="height:100%; background:var(--success); width:0%;"></div></div>
+        </div>
+        
+        <div id="dtStatus" style="margin-top:20px; font-weight:800; color:var(--success); display:none;"><i class="fas fa-check-circle"></i> CONQUISTADO</div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function openDetail(name, desc, icon, unlocked, cur, tgt) {
+        document.getElementById('dtIcon').innerText = icon;
+        document.getElementById('dtName').innerText = name;
+        document.getElementById('dtDesc').innerText = desc;
+        
+        const progArea = document.getElementById('dtProgress');
+        const statusArea = document.getElementById('dtStatus');
+        
+        if (unlocked) {
+            progArea.style.display = 'none'; statusArea.style.display = 'block';
+            document.getElementById('dtIcon').style.filter = 'none'; document.getElementById('dtIcon').style.opacity = '1';
+        } else {
+            statusArea.style.display = 'none';
+            document.getElementById('dtIcon').style.filter = 'grayscale(1)'; document.getElementById('dtIcon').style.opacity = '0.5';
+            
+            if (tgt && tgt > 1) {
+                progArea.style.display = 'block';
+                const pct = Math.min(100, (cur / tgt) * 100);
+                document.getElementById('dtBar').style.width = pct + '%';
+                document.getElementById('dtProgText').innerText = `${cur} / ${tgt}`;
+            } else { progArea.style.display = 'none'; }
+        }
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+</script>
+{% endblock %}
+{% endblock %}
+
+

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    /* Estilo Específico para garantir renderização dos gráficos */
+    .chart-box { position: relative; height: 220px; width: 100%; }
+    .chart-box-small { position: relative; height: 150px; width: 100%; }
+
+    /* Novo Botão PDF Largo */
+    .btn-pdf-full { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 15px; border-radius: 16px; background: rgba(37, 99, 235, 0.1); color: var(--primary); font-weight: 800; text-decoration: none; border: 1px solid rgba(37, 99, 235, 0.2); margin-bottom: 20px; transition: 0.2s; cursor: pointer; }
+    .btn-pdf-full:active { background: rgba(37, 99, 235, 0.2); transform: scale(0.98); }
+    .btn-pdf-locked { background: #F1F5F9; color: var(--text-secondary); border-color: transparent; opacity: 0.9; }
+
+    /* Modal Upsell */
+    #upsellModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:5000; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+    .upsell-card { width:90%; max-width:350px; text-align:center; padding:30px; background: white; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; animation: popUp 0.3s; }
+    .close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: #aaa; cursor: pointer; }
+    @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Relatórios</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Análise de Performance</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 120px; animation-delay: 0.1s;">
+    
+    {% if current_user.plan_type == 'premium' %}
+        <a href="/relatorio/imprimir_pdf" target="_blank" class="btn-pdf-full"><i class="fas fa-file-pdf"></i> BAIXAR RELATÓRIO PDF</a>
+    {% else %}
+        <div class="btn-pdf-full btn-pdf-locked" onclick="openUpsell('pdf')"><i class="fas fa-lock"></i> BAIXAR RELATÓRIO PDF (PREMIUM)</div>
+    {% endif %}
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 20px;">
+        <div class="filter-btn {{ 'active' if tipo == 'dia' else '' }}"><span class="fb-label">DIA</span><span class="fb-value">{{ filter_label if tipo == 'dia' else 'Filtrar' }}</span><input type="date" onchange="submitRel(this.value, 'dia')" class="filter-input"></div>
+        <div class="filter-btn {{ 'active' if tipo == 'semana' else '' }}"><span class="fb-label">SEM</span><span class="fb-value">{{ filter_label|safe if tipo == 'semana' else 'Filtrar' }}</span><select onchange="submitRel(this.value, 'semana')" class="filter-input"><option value="" disabled selected>Selecione...</option>{% for week in week_options %}<option value="{{ week.value }}" {% if tipo == 'semana' and valor == week.value %}selected{% endif %}>{{ week.label }}</option>{% endfor %}</select></div>
+        <div class="filter-btn {{ 'active' if tipo == 'mes' else '' }}"><span class="fb-label">MÊS</span><span class="fb-value">{{ filter_label if tipo == 'mes' else 'Filtrar' }}</span><input type="month" onchange="submitRel(this.value, 'mes')" class="filter-input"></div>
+        
+        <!-- BOTÃO ANO BLOQUEADO -->
+        {% if current_user.plan_type == 'basic' %}
+        <div class="filter-btn" style="opacity: 0.8; background: #f1f5f9; border-color: transparent;" onclick="openUpsell('anual')">
+            <span class="fb-label" style="color:var(--text-secondary);">ANO</span>
+            <span class="fb-value" style="color:var(--text-secondary);"><i class="fas fa-lock" style="font-size:10px;"></i> PRO</span>
+        </div>
+        {% else %}
+        <div class="filter-btn {{ 'active' if tipo == 'anual' else '' }}"><span class="fb-label">ANO</span><span class="fb-value">{{ filter_label if tipo == 'anual' else 'Filtrar' }}</span><select onchange="submitRel(this.value, 'anual')" class="filter-input"><option value="" disabled selected>Selecione...</option>{% for a in anos %}<option value="{{ a }}" {% if tipo == 'anual' and valor == a|string %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+        {% endif %}
+    </div>
+    
+    <div class="glass-card">
+        <div class="card-title"><span>Resumo Financeiro</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="text-align:center; flex:1;"><span style="font-size:10px; color:var(--text-secondary); font-weight:700; text-transform:uppercase;">Faturamento</span><div style="font-size:18px; font-weight:800; color:var(--success); margin-top:5px;">R$ {{ "%.2f"|format(total_ganho) }}</div></div>
+            <div style="width:1px; height:30px; background:rgba(0,0,0,0.1);"></div>
+            <div style="text-align:center; flex:1;"><span style="font-size:10px; color:var(--text-secondary); font-weight:700; text-transform:uppercase;">Lucro Op.</span><div style="font-size:18px; font-weight:800; color:var(--primary); margin-top:5px;">R$ {{ "%.2f"|format(total_ganho - total_despesa) }}</div></div>
+        </div>
+    </div>
+
+    {% if tipo != 'dia' %}
+    <div class="glass-card"><div class="card-title"><span>Evolução</span></div><div class="chart-box"><canvas id="mainChart"></canvas></div></div>
+    {% endif %}
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+        <div class="glass-card" style="padding:15px; margin:0;"><div class="card-title" style="margin-bottom:10px; font-size:10px;">Faturamento (R$)</div><div class="chart-box-small"><canvas id="chartAppsRelatorio"></canvas></div></div>
+        <div class="glass-card" style="padding:15px; margin:0;"><div class="card-title" style="margin-bottom:10px; font-size:10px;">Volume Corridas</div><div class="chart-box-small"><canvas id="chartQtdApps"></canvas></div></div>
+    </div>
+
+    <div class="glass-card" style="display:flex; align-items:center; gap:15px; padding:15px;">
+        <div style="width:45px; height:45px; background:rgba(245, 158, 11, 0.1); color:var(--warning); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;"><i class="fas fa-trophy"></i></div>
+        <div><div style="font-size:12px; color:var(--text-secondary); font-weight:600;">Melhor Dia (Recorde)</div><div style="font-size:18px; font-weight:800; color:var(--text-main);">R$ {{ "%.2f"|format(best_day.val) }}</div><div style="font-size:11px; color:var(--primary); font-weight:700;">{{ best_day.full }}</div></div>
+    </div>
+</div>
+
+<!-- MODAL UPSELL DINÂMICO -->
+<div id="upsellModal">
+    <div class="upsell-card">
+        <button class="close-modal" onclick="closeUpsell()">&times;</button>
+        <div style="width:70px; height:70px; background:rgba(37,99,235,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; color:var(--primary); font-size:30px;">
+            <i class="fas fa-crown"></i>
+        </div>
+        <h3 id="upsellTitle" style="margin:0 0 10px 0; color:var(--text-main); font-size:20px; font-weight:800;">Recurso Premium</h3>
+        <p id="upsellText" style="font-size:14px; color:var(--text-secondary); margin-bottom:25px; line-height:1.5;">
+            Esta funcionalidade é exclusiva para membros Premium.
+        </p>
+        <a href="/assinar" class="btn" style="border-radius:50px; background:var(--primary); box-shadow: 0 10px 30px rgba(37,99,235,0.4); text-decoration:none; display:flex; justify-content:center; align-items:center; padding:15px; color:white; font-weight:800;">
+            Desbloquear Agora
+        </a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function submitRel(valor, tipo) { if(!valor) return; window.location.href = `/relatorios?tipo=${tipo}&valor=${valor}`; }
+
+    // LÓGICA DO MODAL
+    function openUpsell(feature) {
+        const title = document.getElementById('upsellTitle');
+        const text = document.getElementById('upsellText');
+        
+        if(feature === 'pdf') {
+            title.innerText = "Relatórios em PDF";
+            text.innerHTML = "Gere documentos profissionais com todos os detalhes operacionais e financeiros. <br>Exclusivo do plano Premium.";
+        } else if (feature === 'anual') {
+            title.innerText = "Visão Anual";
+            text.innerHTML = "Analise a sua evolução mês a mês e compare o desempenho anual. <br>Exclusivo do plano Premium.";
+        }
+        
+        document.getElementById('upsellModal').style.display = 'flex';
+    }
+    
+    function closeUpsell() {
+        document.getElementById('upsellModal').style.display = 'none';
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const colors = { primary: '#2563EB', danger: '#EF4444', bgPrimary: 'rgba(37, 99, 235, 0.1)', apps: ['#1E293B', '#F59E0B', '#10B981', '#2563EB'] };
+        const formatMoney = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // ... (Charts mantidos iguais ao anterior) ...
+        const ctxMain = document.getElementById('mainChart');
+        if(ctxMain) {
+            new Chart(ctxMain, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson }},
+                    datasets: [
+                        { label: 'Ganho', data: {{ chart_data|tojson }}, borderColor: colors.primary, backgroundColor: colors.bgPrimary, fill: true, tension: 0.3, pointRadius: 2 },
+                        { label: 'Despesa', data: {{ chart_despesa|tojson }}, borderColor: colors.danger, borderDash: [5, 5], tension: 0.3, pointRadius: 0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { display: false } } } }
+            });
+        }
+        
+        const rawAppsVal = {{ dados_apps|tojson }};
+        const rawAppsQtd = {{ qtd_apps|tojson }};
+        const baseLabels = ['Uber', '99', 'Part', '{{ custom_app_name }}'];
+        const labelsWithVal = baseLabels.map((l, i) => `${l} (${formatMoney(rawAppsVal[i])})`);
+        const labelsWithQtd = baseLabels.map((l, i) => `${l} (${rawAppsQtd[i]})`);
+
+        const ctxBar = document.getElementById('chartAppsRelatorio');
+        if(ctxBar) { 
+            new Chart(ctxBar, { 
+                type: 'bar', 
+                data: { labels: labelsWithVal, datasets: [{ label: 'R$', data: rawAppsVal, backgroundColor: colors.apps, borderRadius: 4 }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } } } 
+            }); 
+        }
+
+        const ctxPie = document.getElementById('chartQtdApps');
+        if(ctxPie) {
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: { labels: labelsWithQtd, datasets: [{ data: rawAppsQtd, backgroundColor: colors.apps, borderWidth: 0, hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } } } }
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+
+
+

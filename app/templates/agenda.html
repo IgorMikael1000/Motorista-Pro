@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Agenda</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Corridas Futuras</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top:10px; padding-bottom: 120px; animation-delay: 0.1s;">
+    
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <a href="/novo_agendamento" class="btn" style="flex:1; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 800; box-shadow: 0 8px 25px -5px rgba(37, 99, 235, 0.3);">
+            <i class="fas fa-plus"></i> Novo
+        </a>
+        <!-- CAMPO DE PESQUISA -->
+        <div style="flex:2; position:relative;">
+            <input type="text" id="searchAgenda" placeholder="Buscar passageiro..." style="width:100%; height:100%; padding:0 15px 0 40px; border-radius:16px; border:1px solid rgba(0,0,0,0.05); background:white;">
+            <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+        </div>
+    </div>
+
+    {% if not agendamentos %}
+        <div style="text-align:center; padding:80px 0; color:var(--text-secondary); opacity:0.7;">
+            <i class="far fa-calendar-alt" style="font-size:40px; margin-bottom:15px;"></i>
+            <p>Nenhuma corrida agendada.</p>
+        </div>
+    {% else %}
+        {% for a in agendamentos %}
+        <div class="glass-card agenda-card" style="padding: 0; overflow: hidden; margin-bottom: 15px; border-radius: 20px;">
+            <div style="padding: 15px 20px; background: rgba(255,255,255,0.5); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 8px; font-weight: 800; font-size: 12px;">
+                        {{ a.data_hora[8:10] }}/{{ a.data_hora[5:7] }}
+                    </div>
+                    <span style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                        <i class="far fa-clock" style="font-size:11px; margin-right:2px;"></i> {{ a.data_hora[11:16] }}
+                    </span>
+                </div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--success);">
+                    R$ {{ "%.2f"|format(a.valor) }}
+                </div>
+            </div>
+
+            <div style="padding: 20px;">
+                <div class="client-name" style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 15px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-user-circle" style="color:var(--text-secondary); font-size:16px;"></i> {{ a.cliente }}
+                </div>
+                <div style="position: relative; padding-left: 25px; margin-bottom: 12px;">
+                    <div style="position: absolute; left: 7px; top: 8px; bottom: -20px; width: 2px; background: rgba(0,0,0,0.1); z-index:0;"></div>
+                    <div style="position: absolute; left: 0; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: var(--primary); z-index:1;"></div>
+                    <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;">Origem</div>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ a.origem }}</div>
+                </div>
+                {% if a.parada %}
+                <div style="position: relative; padding-left: 25px; margin-bottom: 12px;">
+                    <div style="position: absolute; left: 7px; top: -10px; bottom: -20px; width: 2px; background: rgba(0,0,0,0.1); z-index:0;"></div>
+                    <div style="position: absolute; left: 2px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index:1;"></div>
+                    <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;">Parada</div>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ a.parada }}</div>
+                </div>
+                {% endif %}
+                <div style="position: relative; padding-left: 25px;">
+                    <div style="position: absolute; left: 0; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: var(--danger); z-index:1;"></div>
+                    <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;">Destino</div>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ a.destino }}</div>
+                </div>
+                {% if a.observacao %}
+                <div style="margin-top:15px; background:rgba(0,0,0,0.03); padding:10px; border-radius:10px; font-size:12px; color:var(--text-secondary); font-style:italic;">
+                    "{{ a.observacao }}"
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="padding: 0 20px 20px 20px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px;">
+                <!-- BOTÃO CONCLUIR (Restaurado para todos) -->
+                <button onclick="confirmarRecibo('{{ a.id }}')" class="btn" style="padding: 0; height: 42px; border-radius: 12px; font-size: 13px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">
+                    <i class="fas fa-check"></i> Concluir
+                </button>
+                
+                <a href="/editar_agendamento/{{ a.id }}" style="width: 42px; height: 42px; border-radius: 12px; background: white; border: 1px solid rgba(0,0,0,0.05); color: var(--text-main); display: flex; align-items: center; justify-content: center; text-decoration:none;"><i class="fas fa-pen"></i></a>
+                <a href="/deletar_agendamento/{{ a.id }}" onclick="return confirm('Apagar?')" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; text-decoration:none;"><i class="fas fa-trash"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- MODAL DECISÃO DE RECIBO -->
+<div id="receiptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(8px);">
+    <div style="background:var(--bg-body); width:85%; max-width:320px; padding:25px; border-radius:25px; box-shadow:0 20px 60px rgba(0,0,0,0.3); text-align:center; border: 1px solid var(--glass-border);">
+        <div style="width:60px; height:60px; background:rgba(16, 185, 129, 0.15); color:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px auto; font-size:24px;"><i class="fas fa-file-invoice-dollar"></i></div>
+        <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size: 18px;">Finalizar Corrida?</h3>
+        <p style="color:var(--text-secondary); font-size:13px; margin-bottom:25px; line-height: 1.5;">Deseja gerar um <b>Recibo PDF</b> para enviar ao passageiro?</p>
+        
+        <div style="display:flex; flex-direction: column; gap:10px;">
+            <!-- LÓGICA DE BLOQUEIO NO MODAL -->
+            {% if current_user.plan_type == 'basic' %}
+                <button onclick="openUpsellReceipt()" class="btn" style="background: #E2E8F0; color: #64748B; box-shadow: none; border: 1px solid #CBD5E1;">
+                    <i class="fas fa-lock" style="margin-right:5px;"></i> Sim, Gerar Recibo
+                </button>
+            {% else %}
+                <button onclick="finalizar(1)" class="btn" style="width: 100%; border-radius:15px; padding: 15px;">Sim, Gerar Recibo</button>
+            {% endif %}
+            
+            <button onclick="finalizar(0)" class="btn" style="background: transparent; border: 1px solid var(--primary); color: var(--primary); width: 100%; box-shadow: none; border-radius:15px; padding: 15px;">Apenas Concluir</button>
+            <button onclick="document.getElementById('receiptModal').style.display='none'" style="background:transparent; border:none; color:var(--text-secondary); padding: 10px; cursor: pointer; font-size: 12px;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL UPSELL (RECIBOS) -->
+<div id="upsellReceiptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:5000; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+    <div style="background:white; width:90%; max-width:350px; text-align:center; padding:30px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; animation: popUp 0.3s;">
+        <button onclick="document.getElementById('upsellReceiptModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: #aaa; cursor: pointer;">&times;</button>
+        <div style="width:70px; height:70px; background:rgba(37,99,235,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; color:var(--primary); font-size:30px;">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <h3 style="margin:0 0 10px 0; color:var(--text-main); font-size:20px; font-weight:800;">Recibos Profissionais</h3>
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:25px; line-height:1.5;">A emissão de recibos PDF é uma ferramenta exclusiva do Plano Premium para passar mais credibilidade aos seus clientes.</p>
+        <a href="/assinar" class="btn" style="border-radius:50px; background:var(--primary); box-shadow: 0 10px 30px rgba(37,99,235,0.4);">Desbloquear Recibos</a>
+    </div>
+</div>
+<style>@keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }</style>
+
+<script>
+    let currentId = null;
+    function confirmarRecibo(id) { currentId = id; document.getElementById('receiptModal').style.display = 'flex'; }
+    function finalizar(recibo) { window.location.href = `/concluir_agendamento/${currentId}?recibo=${recibo}`; }
+    function openUpsellReceipt() { 
+        document.getElementById('receiptModal').style.display = 'none';
+        document.getElementById('upsellReceiptModal').style.display = 'flex'; 
+    }
+
+    // Filtro de Pesquisa
+    document.getElementById('searchAgenda').addEventListener('keyup', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('.agenda-card').forEach(card => {
+            const name = card.querySelector('.client-name').innerText.toLowerCase();
+            card.style.display = name.includes(term) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}
+
+
+

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    {% if current_user.is_authenticated %}
+        <a href="/configuracoes" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    {% else %}
+        <a href="/" class="back-btn"><i class="fas fa-home"></i></a>
+    {% endif %}
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Termos de Uso</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">& Política de Privacidade</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 50px; animation-delay: 0.1s;">
+    
+    <div class="glass-card" style="text-align: left;">
+        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:20px; text-align:center;">Última atualização: Dezembro de 2025</p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">1. O Serviço</h3>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.8;">
+            O <strong>Motorista Pro</strong> é uma ferramenta de gestão financeira destinada exclusivamente a motoristas de aplicativos. O serviço é fornecido "no estado em que se encontra", com o objetivo de auxiliar no cálculo de lucros e despesas.
+        </p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">2. Assinatura e Renovação</h3>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.8;">
+            <strong>Cartão de Crédito:</strong> A assinatura funciona em modelo de recorrência mensal. A cobrança é automática a cada 30 dias. O cancelamento pode ser feito a qualquer momento nas configurações, interrompendo cobranças futuras.<br><br>
+            <strong>PIX:</strong> O acesso via PIX é pré-pago e concede 30 dias de uso. Não há renovação automática; ao fim do período, o acesso é bloqueado até novo pagamento.
+        </p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">3. Isenção de Responsabilidade</h3>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.8;">
+            Os cálculos de "Lucro Real" são estimativas baseadas nos dados inseridos pelo utilizador (consumo, preço do combustível, custos de manutenção). O Motorista Pro não garante precisão contábil e não se responsabiliza por prejuízos financeiros decorrentes de decisões baseadas no app. <strong>Nunca utilize o aplicativo enquanto o veículo estiver em movimento.</strong>
+        </p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">4. Política de Reembolso</h3>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.8;">
+            Em conformidade com o Art. 49 do CDC, garantimos o direito de arrependimento e reembolso integral se solicitado em até <strong>7 dias corridos após a primeira assinatura</strong>. Renovações automáticas subsequentes não são reembolsáveis.
+        </p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">5. Privacidade de Dados (LGPD)</h3>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.8;">
+            Respeitamos a sua privacidade. Coletamos apenas dados essenciais para o funcionamento (Nome, E-mail, Telefone). Seus dados financeiros são privados e não são vendidos a terceiros. As transações de pagamento são processadas externamente (Stripe/Mercado Pago) e não armazenamos dados do seu cartão.
+        </p>
+
+        <h3 style="color:var(--primary); font-size:15px; margin-top:20px;">6. Uso de Captura de Tela (Android)</h3>
+        <div style="background:rgba(37, 99, 235, 0.05); border-left: 3px solid var(--primary); padding:10px; border-radius:5px; margin-top:10px;">
+            <p style="font-size:13px; color:var(--text-main); line-height:1.6; opacity:0.9; margin:0;">
+                O aplicativo Android utiliza a permissão de <strong>Media Projection (Captura de Tela)</strong> exclusivamente para ler informações de corridas (preço, distância e tempo) exibidas na tela do seu dispositivo. 
+                <br><br>
+                <strong>Como funciona:</strong>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                    <li>Utilizamos tecnologia OCR (Reconhecimento Óptico de Caracteres) para extrair apenas os números relevantes.</li>
+                    <li>Todo o processamento é feito <strong>localmente no seu dispositivo</strong>.</li>
+                    <li>Nenhuma imagem, vídeo ou conteúdo da sua tela é enviado para servidores externos, armazenado em nuvem ou compartilhado com terceiros.</li>
+                </ul>
+                Esta funcionalidade é ativada somente quando você clica explicitamente no botão "Iniciar Robô" e pode ser interrompida a qualquer momento pela barra de notificações.
+            </p>
+        </div>
+
+        <div style="background:rgba(37, 99, 235, 0.05); border:1px solid rgba(37, 99, 235, 0.2); padding:15px; border-radius:15px; margin-top:30px; font-size:12px; text-align:center;">
+            Dúvidas ou solicitações de exclusão de dados?<br>
+            <a href="mailto:appmotoristapro@gmail.com" style="color:var(--primary); font-weight:700;">appmotoristapro@gmail.com</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

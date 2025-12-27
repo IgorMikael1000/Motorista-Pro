@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/agenda" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Editar</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary); font-weight: 500;">Alterar Agendamento</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<form method="post" class="container fade-in" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="glass-card">
+        <div class="card-title"><span>Dados Principais</span></div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">CLIENTE</label>
+            <input type="text" name="cliente" value="{{ registro['cliente'] }}" required style="font-weight: 600;">
+        </div>
+        
+        <div>
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">VALOR (R$)</label>
+            <input type="number" step="0.01" name="valor" value="{{ registro['valor'] }}" style="font-weight: 700; color: var(--success);">
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title"><span>Data e Hora</span></div>
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px;">
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DIA</label>
+                <input type="date" name="data_ag" value="{{ d_val }}" required style="font-weight: 600;">
+            </div>
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">HORA</label>
+                <input type="time" name="hora_ag" value="{{ h_val }}" required style="font-weight: 600; text-align: center;">
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title"><span>Trajeto</span></div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">ORIGEM</label>
+            <input type="text" name="origem" value="{{ registro['origem'] }}" required>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">PARADA</label>
+            <input type="text" name="parada" value="{{ registro['parada'] or '' }}" placeholder="Opcional">
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">DESTINO</label>
+            <input type="text" name="destino" value="{{ registro['destino'] }}" required>
+        </div>
+        
+        <div>
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">OBSERVAÇÕES</label>
+            <textarea name="observacao" rows="2">{{ registro['observacao'] }}</textarea>
+        </div>
+    </div>
+
+    <button type="submit" class="btn" style="margin-bottom:15px; padding:18px; width:100%; border-radius: 50px;">
+        <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+    </button>
+    
+    <a href="/deletar_agendamento/{{ registro['id'] }}" onclick="return confirm('Tem certeza?')" style="display:flex; justify-content:center; align-items:center; gap:8px; color:var(--danger); font-weight:700; font-size:13px; text-decoration:none; padding:15px; background:rgba(239, 68, 68, 0.1); border-radius:50px;">
+        <i class="fas fa-trash"></i> EXCLUIR AGENDAMENTO
+    </a>
+</form>
+{% endblock %}
+
+
+

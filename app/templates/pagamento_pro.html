@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Escolha seu Plano</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <style>
+        :root { --bg-body: #F0F4F8; --primary: #2563EB; --text-main: #0F172A; --text-secondary: #64748B; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); margin: 0; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .header { width: 100%; max-width: 450px; display: flex; align-items: center; margin-bottom: 20px; }
+        .back-link { width: 40px; height: 40px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; color: var(--text-main); text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        /* CARD DO PLANO */
+        .plan-container { width: 100%; max-width: 360px; background: white; border-radius: 24px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .plan-tabs { display: flex; background: #F1F5F9; border-radius: 14px; padding: 4px; margin-bottom: 25px; }
+        .tab-btn { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--text-secondary); cursor: pointer; transition: 0.2s; position: relative; }
+        .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .tab-btn.active.premium-tab { color: var(--primary); }
+        
+        /* PREÇO */
+        .price-display { text-align: center; margin-bottom: 25px; animation: fadeIn 0.3s; }
+        .big-price { font-size: 36px; font-weight: 800; color: var(--text-main); letter-spacing: -1px; }
+        .period { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+        .badge-discount { display: inline-block; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; margin-top: 5px; }
+
+        /* LISTA BENEFÍCIOS */
+        .features-list { margin-bottom: 25px; text-align: left; }
+        .f-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: var(--text-main); line-height: 1.4; }
+        .f-icon { color: #10B981; font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; margin-top: 2px; }
+        .premium-header { font-weight: 800; color: var(--primary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; border-bottom: 1px dashed rgba(37,99,235,0.2); padding-bottom: 5px; }
+
+        /* PAGAMENTO */
+        .payment-section { width: 100%; text-align: center; }
+        .payment-title { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 10px; }
+        
+        .btn-pay {
+            width: 100%; padding: 14px 20px; border-radius: 16px; 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-weight: 700; font-size: 14px; margin-bottom: 10px; cursor: pointer;
+            transition: 0.2s; border: none; text-decoration: none;
+            max-width: 320px; margin-left: auto; margin-right: auto;
+        }
+        .btn-pay:active { transform: scale(0.98); }
+
+        .pay-card { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); }
+        .pay-pix { background: #10B981; color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+
+        /* MODAL PIX */
+        #pixArea { display: none; background: white; padding: 25px; border-radius: 24px; text-align: center; margin-top: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); width: 100%; max-width: 360px; }
+        .pix-code { background: #F1F5F9; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 12px; color: var(--text-main); word-break: break-all; margin: 15px 0; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="back-link"><i class="fas fa-times"></i></a>
+        <div style="flex:1; text-align:center; font-weight:700; color:var(--text-main);">Assinatura</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <!-- CARD SELETOR -->
+    <div class="plan-container">
+        <div class="plan-tabs">
+            <div class="tab-btn" id="tab-basic" onclick="selectPlan('basic')">BÁSICO</div>
+            <div class="tab-btn active premium-tab" id="tab-premium" onclick="selectPlan('premium')">PREMIUM</div>
+        </div>
+
+        <div id="plan-content">
+            <div class="price-display">
+                {% if tem_desconto %}
+                    <span class="badge-discount" id="badge-disc" style="display:none;">50% OFF (Indicação)</span>
+                {% endif %}
+                <div class="big-price" id="price-val">R$ 19,90</div>
+                <div class="period">por mês</div>
+            </div>
+
+            <div class="features-list" id="feat-list"></div>
+        </div>
+    </div>
+
+    <div class="payment-section">
+        <div class="payment-title">Escolha como pagar</div>
+        
+        <button class="btn-pay pay-card" onclick="payCard()">
+            <i class="far fa-credit-card"></i> Cartão de Crédito
+        </button>
+
+        <button class="btn-pay pay-pix" onclick="payPix()">
+            <i class="fas fa-qrcode"></i> PIX
+        </button>
+    </div>
+
+    <!-- PIX MODAL -->
+    <div id="pixArea">
+        <h3 style="margin:0; font-size:18px; color:#10B981;">Pagamento PIX</h3>
+        <p style="font-size:13px; color:#64748B;">Escaneie ou copie o código abaixo.</p>
+        <img id="qrImg" src="" style="width:150px; height:150px; margin:10px 0; mix-blend-mode:multiply;">
+        <div class="pix-code" id="pixCode">Gerando...</div>
+        <button onclick="copyPix()" style="background:#10B981; color:white; border:none; padding:12px 25px; border-radius:12px; font-weight:700; width:100%;">Copiar Código</button>
+    </div>
+
+    <script>
+        const stripeKey = '{{ stripe_public_key }}';
+        let stripe = null;
+        if(stripeKey && stripeKey !== 'None') stripe = Stripe(stripeKey);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        let selectedPlan = 'premium';
+        const hasDiscount = {{ 'true' if tem_desconto else 'false' }};
+
+        // LISTA BÁSICA
+        const listBasic = [
+            'Livro Caixa Digital',
+            'Lançamentos Ilimitados',
+            'Calculadora Flex',
+            'Histórico (Últimos 30 dias)',
+            'Suporte via E-mail',
+            'Gestão de Manutenção (Avisos)'
+        ];
+
+        // LISTA PREMIUM (ATUALIZADA)
+        const listPremium = [
+            'Lucro Real (+ Custos Fixos)',
+            'Livro de Revisões em PDF',
+            'Gestão de IPVA, Seguro e Aluguel',
+            'Recibos Profissionais',
+            'Suporte VIP WhatsApp',
+            'Meta Semanal Inteligente',
+            'Relatórios Avançados (PDF)'
+        ];
+
+        function renderFeatures(plan) {
+            const list = document.getElementById('feat-list');
+            list.innerHTML = '';
+
+            if (plan === 'basic') {
+                document.getElementById('price-val').innerText = 'R$ 9,90';
+                if(document.getElementById('badge-disc')) document.getElementById('badge-disc').style.display = 'none';
+                
+                listBasic.forEach(txt => {
+                    list.innerHTML += `<div class="f-item"><i class="fas fa-check f-icon"></i> ${txt}</div>`;
+                });
+            } else {
+                let price = 'R$ 19,90';
+                if (hasDiscount) {
+                    price = 'R$ 9,95';
+                    if(document.getElementById('badge-disc')) document.getElementById('badge-disc').style.display = 'inline-block';
+                }
+                document.getElementById('price-val').innerText = price;
+                
+                list.innerHTML += `<span class="premium-header"><i class="fas fa-plus-circle"></i> TODOS OS ITENS DO PLANO BASIC</span>`;
+                
+                listPremium.forEach(txt => {
+                    list.innerHTML += `<div class="f-item"><i class="fas fa-check-circle f-icon" style="color:var(--primary);"></i> ${txt}</div>`;
+                });
+            }
+        }
+
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + plan).classList.add('active');
+            renderFeatures(plan);
+        }
+
+        function payCard() {
+            fetch('/create-checkout-session', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ plan: selectedPlan })
+            })
+            .then(r => r.json())
+            .then(s => {
+                if(s.error) alert(s.error); else stripe.redirectToCheckout({ sessionId: s.id });
+            });
+        }
+
+        function payPix() {
+            document.getElementById('pixArea').style.display = 'block';
+            fetch('/create-pix-payment', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ plan: selectedPlan })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.error) alert(d.error); else {
+                    document.getElementById('pixCode').innerText = d.qr_code;
+                    document.getElementById('qrImg').src = 'data:image/png;base64,' + d.qr_code_base64;
+                }
+            });
+        }
+
+        function copyPix() {
+            navigator.clipboard.writeText(document.getElementById('pixCode').innerText).then(() => alert('Copiado!'));
+        }
+
+        // Init
+        renderFeatures('premium');
+    </script>
+</body>
+</html>
+
+
+

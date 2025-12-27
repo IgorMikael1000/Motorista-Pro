@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/configuracoes" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Dados Pessoais</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary);">Mantenha seu perfil atualizado</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in" style="padding-top: 10px; padding-bottom: 100px; animation-delay: 0.1s;">
+    
+    <!-- CARD DE PERFIL -->
+    <div class="glass-card" style="text-align:center; padding:30px 20px;">
+        <div style="position:relative; width:80px; height:80px; margin:0 auto 15px auto;">
+            <div style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--glass-bg); border:var(--glass-border); box-shadow:var(--glass-shadow); display:flex; align-items:center; justify-content:center;">
+                {% if current_user.profile_image %}
+                    <img id="avatarPreview" src="{{ current_user.profile_image }}" style="width:100%; height:100%; object-fit:cover;">
+                {% else %}
+                    <i class="fas fa-user" style="font-size:35px; color:var(--primary);"></i>
+                    <img id="avatarPreview" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                {% endif %}
+            </div>
+            
+            <!-- Botão Câmera -->
+            <button onclick="document.getElementById('fileAvatar').click()" style="position:absolute; bottom:0; right:0; background:var(--primary); color:white; border:2px solid white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                <i class="fas fa-camera" style="font-size:12px;"></i>
+            </button>
+            <input type="file" id="fileAvatar" accept="image/*" style="display:none;">
+        </div>
+        
+        <p style="font-size:12px; color:var(--text-secondary);">Toque na câmera para alterar a foto.</p>
+        <div id="avatarLoader" style="display:none; font-size:12px; color:var(--primary); margin-top:5px;"><i class="fas fa-spinner fa-spin"></i> Enviando...</div>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <form action="/update_user_data" method="POST" class="glass-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div style="margin-bottom:20px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">NOME COMPLETO</label>
+            <input type="text" name="nome" value="{{ current_user.nome }}" required placeholder="Seu nome">
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">NASCIMENTO</label>
+                <!-- Formata a data para o input value (YYYY-MM-DD) -->
+                <input type="date" name="data_nascimento" value="{{ current_user.data_nascimento.strftime('%Y-%m-%d') if current_user.data_nascimento else '' }}" style="font-weight:700;">
+            </div>
+            <div>
+                <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">WHATSAPP</label>
+                <input type="tel" name="whatsapp" value="{{ current_user.whatsapp or '' }}" placeholder="(00) 00000-0000">
+            </div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+            <label style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:5px; display:block;">ENDEREÇO</label>
+            <input type="text" name="endereco" value="{{ current_user.endereco or '' }}" placeholder="Rua, Número, Bairro">
+        </div>
+    </form>
+    
+    <button type="submit" form="0" onclick="document.querySelector('form').submit()" class="btn" style="border-radius:50px; padding:18px; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);">
+        <i class="fas fa-check"></i> Salvar Alterações
+    </button>
+
+</div>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/profile_upload.js') }}"></script>
+{% endblock %}
+{% endblock %}
+
+
+

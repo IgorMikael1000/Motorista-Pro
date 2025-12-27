@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .ocr-container { max-width: 600px; margin: 0 auto; padding-bottom: 120px; }
+    
+    /* ANIMAÇÕES */
+    @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* BOTÃO INICIAR MONITORAMENTO (DESTAQUE TOTAL) */
+    .btn-start-robot {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+        color: white; width: 100%; padding: 30px 20px; border-radius: 25px;
+        font-weight: 900; font-size: 18px; border: none; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+        box-shadow: 0 15px 40px rgba(37, 99, 235, 0.3); margin-bottom: 30px;
+        position: relative; overflow: hidden; text-transform: uppercase; letter-spacing: 1px;
+        animation: pulse-glow 2s infinite; text-decoration: none;
+    }
+    .btn-start-robot i { font-size: 32px; margin-bottom: 5px; }
+    .btn-start-robot small { font-size: 11px; font-weight: 600; opacity: 0.8; text-transform: none; letter-spacing: 0; }
+    .btn-start-robot:active { transform: scale(0.98); animation: none; }
+
+    /* CARD CONFIGURAÇÃO */
+    .config-card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
+    .config-header { font-size: 13px; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+    
+    .range-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    .input-box label { font-size: 10px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px; text-transform: uppercase; }
+    .input-box input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: var(--text-main); font-size: 16px; outline: none; transition: 0.2s; }
+    .input-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    
+    .input-box.good input { border-color: #86efac; color: #166534; background: #f0fdf4; }
+    .input-box.bad input { border-color: #fca5a5; color: #991b1b; background: #fef2f2; }
+
+    .mid-range-alert { text-align: center; font-size: 11px; color: #D97706; background: #FFFBEB; padding: 10px; border-radius: 12px; margin-top: 10px; border: 1px dashed #FCD34D; }
+
+    /* RODAPÉ E NAVEGAÇÃO */
+    .footer-nav { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); animation: slideUp 0.5s ease-out; }
+    .footer-q { font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; font-weight: 600; }
+    .btn-link { background: white; color: var(--text-main); border: 1px solid #e2e8f0; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    .btn-link:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    /* DOWNLOAD PAGE */
+    .download-hero { text-align: center; padding: 40px 25px; background: white; border-radius: 25px; margin-bottom: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+    .btn-download { background: #10B981; color: white; width: 100%; padding: 20px; border-radius: 18px; font-weight: 800; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3); margin: 25px 0; transition: transform 0.2s; }
+    .btn-download:active { transform: scale(0.97); }
+    
+    .install-steps { background: #F8FAFC; border-radius: 20px; padding: 25px; text-align: left; border: 1px solid #e2e8f0; }
+    .step { display: flex; gap: 15px; margin-bottom: 25px; position: relative; }
+    .step:last-child { margin-bottom: 0; }
+    .step::after { content: ''; position: absolute; left: 15px; top: 35px; bottom: -20px; width: 2px; background: #e2e8f0; z-index: 0; }
+    .step:last-child::after { display: none; }
+    .step-num { width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; position: relative; z-index: 1; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
+    .step-content h4 { margin: 0 0 5px 0; font-size: 14px; font-weight: 700; color: var(--text-main); }
+    .step-content p { margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ABAS */
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: slideUp 0.3s ease-out; }
+
+    /* BASIC UPSELL */
+    .upsell-box { text-align: center; padding: 50px 20px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 30px; color: white; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .btn-upgrade { background: linear-gradient(90deg, #F59E0B 0%, #D97706 100%); color: white; padding: 18px 35px; border-radius: 50px; text-decoration: none; font-weight: 800; display: inline-block; margin-top: 25px; box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header fade-in">
+    <a href="/" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div style="flex-grow: 1; text-align: center;">
+        <h2 style="margin:0; font-size:18px; color:var(--text-main); font-weight: 800;">Robô</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-secondary);">Monitoramento Dinâmico</p>
+    </div>
+    <div style="width:40px;"></div>
+</div>
+
+<div class="container fade-in ocr-container" style="padding-top: 20px;">
+
+    <!-- ================= BASIC PLAN (BLOQUEADO) ================= -->
+    {% if current_user.plan_type == 'basic' %}
+    <div class="upsell-box">
+        <div style="width:80px; height:80px; background:rgba(255,255,255,0.1); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:20px;">
+            <i class="fas fa-lock" style="font-size: 40px; color: #F59E0B;"></i>
+        </div>
+        <h2 style="margin:0 0 10px 0;">Recurso Profissional</h2>
+        <p style="opacity: 0.8; margin-bottom: 10px; line-height: 1.6; font-size: 14px;">
+            O Monitoramento Dinâmico lê a tela do seu celular e calcula o lucro real (R$/KM e R$/Hora) instantaneamente.
+        </p>
+        <p style="font-size:12px; opacity:0.6;">Disponível apenas no plano Premium.</p>
+        <a href="/assinar" class="btn-upgrade">QUERO VIRAR PREMIUM</a>
+    </div>
+    
+    <!-- ================= PREMIUM PLAN (LIBERADO) ================= -->
+    {% else %}
+
+    <!-- VIEW 1: PAINEL DE CONTROLE (START + CONFIG) -->
+    <div id="viewConfig" class="view-section active">
+        
+        <!-- BOTÃO GIGANTE DE INICIAR -->
+        <button onclick="startRobot()" class="btn-start-robot">
+            <i class="fas fa-power-off"></i> 
+            <span>INICIAR MONITORAMENTO</span>
+            <small>Toque para abrir a bolha flutuante</small>
+        </button>
+
+        <!-- CONFIG R$/KM -->
+        <div class="config-card">
+            <div class="config-header"><i class="fas fa-road" style="color:var(--primary);"></i> Parâmetros de Distância</div>
+            <div class="range-inputs">
+                <div class="input-box good">
+                    <label>Corrida Boa (Acima)</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:10px; top:12px; font-size:12px; opacity:0.5;">R$</span>
+                        <input type="number" id="good_km" step="0.1" value="2.0">
+                    </div>
+                </div>
+                <div class="input-box bad">
+                    <label>Corrida Ruim (Abaixo)</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:10px; top:12px; font-size:12px; opacity:0.5;">R$</span>
+                        <input type="number" id="bad_km" step="0.1" value="1.5">
+                    </div>
+                </div>
+            </div>
+            <div class="mid-range-alert">
+                Corridas entre <b>R$ <span id="lbl_bad_km">1.5</span></b> e <b>R$ <span id="lbl_good_km">2.0</span></b> serão marcadas como <b>MÉDIAS</b> (Amarelo).
+            </div>
+        </div>
+
+        <!-- CONFIG R$/HORA -->
+        <div class="config-card">
+            <div class="config-header"><i class="fas fa-clock" style="color:var(--primary);"></i> Parâmetros de Tempo</div>
+            <div class="range-inputs">
+                <div class="input-box good">
+                    <label>Hora Boa (Acima)</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:10px; top:12px; font-size:12px; opacity:0.5;">R$</span>
+                        <input type="number" id="good_hour" step="1" value="60">
+                    </div>
+                </div>
+                <div class="input-box bad">
+                    <label>Hora Ruim (Abaixo)</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:10px; top:12px; font-size:12px; opacity:0.5;">R$</span>
+                        <input type="number" id="bad_hour" step="1" value="40">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="saveSettings()" id="btnSave" class="btn" style="width:100%; border-radius:50px; background:var(--text-main); color:white; font-weight:800; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <i class="fas fa-save"></i> SALVAR CONFIGURAÇÕES
+        </button>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <div class="footer-nav">
+            <div class="footer-q">Ainda não tem o App instalado?</div>
+            <div onclick="switchView('download')" class="btn-link">
+                <i class="fab fa-android" style="color:#10B981; font-size:16px;"></i>
+                BAIXAR E INSTALAR AGORA
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: DOWNLOAD E INSTALAÇÃO -->
+    <div id="viewDownload" class="view-section">
+        <div class="download-hero">
+            <div style="width:70px; height:70px; background:rgba(16,185,129,0.1); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#10B981; font-size:30px; margin-bottom:20px;">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 style="margin:0 0 10px 0; color:var(--text-main); font-weight:800;">App Motorista Pro</h3>
+            <p style="font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px;">
+                Esta é a versão especial instalada no seu celular que permite o <b>Monitoramento Dinâmico</b>. Ela cria uma bolha inteligente sobre os apps de corrida.
+            </p>
+
+            <a href="{{ url_for('static', filename='motoristapro-v1766578470.apk') }}" class="btn-download" download>
+                <i class="fas fa-download"></i> INICIAR DOWNLOAD
+            </a>
+            
+            <p style="font-size:11px; color:#94A3B8;">Versão 2.0 • Android 8+</p>
+        </div>
+
+        <div class="install-steps">
+            <div style="font-weight:800; color:var(--text-main); margin-bottom:25px; font-size:16px;">Passo a Passo de Instalação:</div>
+            
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Baixe o Arquivo</h4>
+                    <p>Toque no botão verde "INICIAR DOWNLOAD" acima. Aguarde o arquivo baixar no seu celular.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Abra o APK</h4>
+                    <p>Quando terminar, toque na notificação "Download concluído" ou vá até a pasta "Downloads" e toque em <b>motoristapro-ocr.apk</b>.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Autorize a Instalação</h4>
+                    <p>Se o Android mostrar um aviso de segurança, toque em <b>Configurações</b> e ative a opção <b>"Permitir desta fonte"</b>.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>Entre na sua Conta</h4>
+                    <p>Abra o app instalado (ícone azul) e faça login com seu e-mail e senha.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <div class="footer-q">Já fez a instalação?</div>
+            <div onclick="switchView('config')" class="btn-link">
+                <i class="fas fa-sliders-h"></i> VOLTAR PARA CONFIGURAÇÕES
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+{% if current_user.plan_type == 'premium' %}
+<script>
+    // Atualiza labels visuais quando digita
+    const inBad = document.getElementById('bad_km');
+    const inGood = document.getElementById('good_km');
+    const lblBad = document.getElementById('lbl_bad_km');
+    const lblGood = document.getElementById('lbl_good_km');
+
+    if(inBad && inGood) {
+        inBad.addEventListener('input', () => lblBad.innerText = inBad.value);
+        inGood.addEventListener('input', () => lblGood.innerText = inGood.value);
+    }
+
+    function switchView(viewName) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        if(viewName === 'download') document.getElementById('viewDownload').classList.add('active');
+        else document.getElementById('viewConfig').classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    function startRobot() {
+        // Verifica se está rodando dentro do WebView do Android
+        if (window.MotoristaProAndroid) {
+            window.MotoristaProAndroid.requestPermission();
+        } else {
+            // Se estiver no Chrome/Browser comum
+            const go = confirm("Para iniciar o robô, você precisa estar dentro do App Android instalado.\n\nDeseja ir para a tela de download?");
+            if(go) switchView('download');
+        }
+    }
+
+    function saveSettings() {
+        const btn = document.getElementById('btnSave');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+        
+        const data = {
+            good_km: document.getElementById('good_km').value,
+            bad_km: document.getElementById('bad_km').value,
+            good_hour: document.getElementById('good_hour').value,
+            bad_hour: document.getElementById('bad_hour').value
+        };
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch('/save_ocr_settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(data)
+        }).then(r => r.json()).then(res => {
+            if(res.status === 'ok') {
+                btn.innerHTML = '<i class="fas fa-check"></i> SUCESSO!';
+                btn.style.background = "#10B981";
+                
+                // Sincronia em tempo real com Android
+                if (window.MotoristaProAndroid) {
+                    window.MotoristaProAndroid.updateConfig(
+                        parseFloat(data.good_km), parseFloat(data.bad_km),
+                        parseFloat(data.good_hour), parseFloat(data.bad_hour)
+                    );
+                }
+                
+                setTimeout(() => { 
+                    btn.innerHTML = oldText; 
+                    btn.style.background = "var(--text-main)"; 
+                }, 2000);
+            } else {
+                alert("Erro ao salvar.");
+                btn.innerHTML = oldText;
+            }
+        });
+    }
+</script>
+{% endif %}
+
+<script>
+    // Sincronização Automática ao Carregar a Página
+    document.addEventListener("DOMContentLoaded", function() {
+        // Pega valores injetados pelo Backend (Jinja2)
+        const gKm = parseFloat("{{ good_km }}");
+        const bKm = parseFloat("{{ bad_km }}");
+        const gHr = parseFloat("{{ good_hour }}");
+        const bHr = parseFloat("{{ bad_hour }}");
+
+        // Preenche os inputs visuais
+        const iGKm = document.getElementById('good_km');
+        if(iGKm) {
+            iGKm.value = gKm;
+            document.getElementById('bad_km').value = bKm;
+            document.getElementById('good_hour').value = gHr;
+            document.getElementById('bad_hour').value = bHr;
+        }
+
+        // ENVIA PARA O ANDROID IMEDIATAMENTE
+        if (window.MotoristaProAndroid) {
+            console.log("Sincronizando configs com Android...");
+            window.MotoristaProAndroid.updateConfig(gKm, bKm, gHr, bHr);
+        }
+    });
+</script>
+
+{% endblock %}
